@@ -37,6 +37,7 @@ const OwnerProfileSchema = new mongoose.Schema({
         required: true,
         trim: true,
         unique:true,
+        trim:true,
         match: [/^(?:\+91)?[9876]\d{9}$/, 'Please enter valid phone number']
     },
     gmail: {
@@ -70,11 +71,6 @@ const OwnerProfileSchema = new mongoose.Schema({
         comment:String,
         createdAt:{ type:Date,default:Date.now }
     }],
-    role: {
-        type: String,
-        enum: ['worker', 'owner'],
-        required: true
-    },
     addressDetails: [{
         state: {
             type: String,
