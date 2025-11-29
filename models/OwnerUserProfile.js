@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 
-const UserProfileSchema = new mongoose.Schema({
+const OwnerProfileSchema = new mongoose.Schema({
     firebaseUid: {
         type: String,
         required: true,
@@ -119,5 +119,5 @@ const UserProfileSchema = new mongoose.Schema({
     }
 });
 
-const UserProfile=mongoose.model('UserProfile',UserProfileSchema);
-module.exports=UserProfile;
+const OwnerUserProfile=mongoose.model('OwnerUserProfile',OwnerProfileSchema);
+module.exports=OwnerUserProfile;
