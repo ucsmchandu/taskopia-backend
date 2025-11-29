@@ -117,7 +117,7 @@ const OwnerProfileSchema = new mongoose.Schema({
         minLength: [5, 'Description is at least 5 characters'],
         maxLength: [150, 'Description cannot exceed 150 characters']
     }
-});
+},{timestamps:true});
 
 const OwnerUserProfile=mongoose.model('OwnerUserProfile',OwnerProfileSchema);
 module.exports=OwnerUserProfile;
