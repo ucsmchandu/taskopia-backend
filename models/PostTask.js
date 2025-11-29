@@ -1,6 +1,6 @@
 const mongoose=require('mongoose');
 
-const PostJobSchema=new mongoose.Schema({
+const PostTaskSchema=new mongoose.Schema({
     userUid:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"OwnerUserProfile",
@@ -56,5 +56,5 @@ const PostJobSchema=new mongoose.Schema({
     },   
 },{timestamps:true})
 
-const PostJob=mongoose.model('PostJob',PostJobSchema);
-module.exports=PostJob;
+const PostTask=mongoose.model('PostJob',PostTaskSchema);
+module.exports=PostTask;
