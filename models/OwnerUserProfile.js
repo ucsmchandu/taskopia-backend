@@ -104,7 +104,7 @@ const OwnerProfileSchema = new mongoose.Schema({
     }],
     status: {
         type: String,
-        enum: ['active', 'inactive', 'suspended', 'permanentlyBlocked'],
+        enum: ['active', 'suspended', 'permanentlyBlocked'],
         default: 'active'
     },
     description: {

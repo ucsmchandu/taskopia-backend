@@ -7,7 +7,7 @@ const connectDB=require('./db')
 connectDB();
 const app=express();
 app.use(cors({
-    origin:["http://localhost:5173"],
+    origin:["http://localhost:5173",'https://taskopia-one.vercel.app'],
     methods:["GET","POST","PUT","DELETE","OPTIONS"],
     credentials:true
 }))
