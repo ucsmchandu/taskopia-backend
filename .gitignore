@@ -1566,6 +1566,7 @@ node_modules/wrappy/package.json
 node_modules/wrappy/README.md
 node_modules/wrappy/wrappy.js
 .env
+apis.txt
 node_modules/.bin/mkdirp
 node_modules/.bin/mkdirp.cmd
 node_modules/.bin/mkdirp.ps1
