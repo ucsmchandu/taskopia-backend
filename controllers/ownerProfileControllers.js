@@ -42,13 +42,25 @@ const uploadProfile=async(req,res)=>{
     }catch(err){
         console.log(err);
         console.log(err.message);
-        res.status(500).json({message:"upload file data failed",error:err.message});
-        return;
+       return res.status(500).json({message:"upload file data failed",error:err.message});
+        
     }
 }
 
-const getProfile=()=>{
-    console.log("get profile");
+const getProfile=async(req,res)=>{
+    try{
+        // const {firebaseId}=req.body;
+        const firebaseId=req.params.firebaseId;
+        const profileData=await OwnerUserProfile.findOne({firebaseUid:firebaseId});
+        // console.log(profileData)
+        if(!profileData)
+            return res.status(404).json({message:"user not found"});
+        return res.status(200).json({profileData:profileData});
+    }catch(err){
+        console.log(err);
+        console.log(err.message);
+        return res.status(500).json({message:"Internal error",error:err.message});
+    } 
 }
 
 module.exports={uploadProfile,getProfile};

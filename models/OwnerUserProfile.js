@@ -4,7 +4,7 @@ const OwnerProfileSchema = new mongoose.Schema({
     firebaseUid: {
         type: String,
         required: true,
-        unique:true
+        unique:true // this also indexing to the attribute so need to create a seperate indexing
     },
     userProfilePhotoUrl: {
         type: String,
@@ -118,6 +118,9 @@ const OwnerProfileSchema = new mongoose.Schema({
         maxLength: [150, 'Description cannot exceed 150 characters']
     }
 },{timestamps:true});
+
+// applying indexing to user on firebase uid to find the user faster
+// OwnerProfileSchema.index({firebaseUid:1},{unique:true});
 
 const OwnerUserProfile=mongoose.model('OwnerUserProfile',OwnerProfileSchema);
 module.exports=OwnerUserProfile;

@@ -8,5 +8,5 @@ ownerProfileRouter.post('/upload/profile',upload.fields([
     { name:"userProfilePhotoUrl",maxCount:1 },
     { name:"businessProfilePhotoUrl",maxCount:1 }
 ]),uploadProfile);
-ownerProfileRouter.get('/get/profile',getProfile);
+ownerProfileRouter.get('/get/profile/:firebaseId',getProfile);
 module.exports=ownerProfileRouter;
