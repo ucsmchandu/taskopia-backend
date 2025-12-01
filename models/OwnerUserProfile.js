@@ -72,6 +72,10 @@ const OwnerProfileSchema = new mongoose.Schema({
         createdAt:{ type:Date,default:Date.now }
     }],
     addressDetails: [{
+        user:{
+            type:mongoose.Schema.Types.ObjectId,
+            ref:'UserProfile'
+        },
         state: {
             type: String,
             required: true,
