@@ -1,4 +1,4 @@
-const OwnerUserProfile=require('../models/OwnerUserProfile')
+const OwnerUserProfileModel=require('../../models/OwnerUserProfileModel')
 
 // to upload the owner profile data
 const uploadProfile=async(req,res)=>{
@@ -19,7 +19,7 @@ const uploadProfile=async(req,res)=>{
             description
         }=req.body;
         // here the two image urls are comes from the middleware which uses cloudinary to store the images
-        const newOwnerProfile=new OwnerUserProfile({
+        const newOwnerProfile=new OwnerUserProfileModel({
             firebaseUid:firebaseUid,
             userProfilePhotoUrl:req.files?.userProfilePhotoUrl?.[0]?.path,
             businessProfilePhotoUrl:req.files?.businessProfilePhotoUrl?.[0]?.path,
@@ -51,7 +51,7 @@ const getProfile=async(req,res)=>{
     try{
         // const {firebaseId}=req.body;
         const firebaseId=req.params.firebaseId;
-        const profileData=await OwnerUserProfile.findOne({firebaseUid:firebaseId});
+        const profileData=await OwnerUserProfileModel.findOne({firebaseUid:firebaseId});
         // console.log(profileData)
         if(!profileData)
             return res.status(404).json({message:"user not found"});

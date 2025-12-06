@@ -122,5 +122,5 @@ const OwnerProfileSchema = new mongoose.Schema({
 // applying indexing to user on firebase uid to find the user faster
 // OwnerProfileSchema.index({firebaseUid:1},{unique:true});
 
-const OwnerUserProfile=mongoose.model('OwnerUserProfile',OwnerProfileSchema);
-module.exports=OwnerUserProfile;
+const OwnerUserProfileModel=mongoose.model('OwnerUserProfile',OwnerProfileSchema);
+module.exports=OwnerUserProfileModel;

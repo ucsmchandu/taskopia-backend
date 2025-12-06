@@ -101,5 +101,5 @@ const WorkerProfileSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-const WorkerUserProfile = mongoose.model('WorkerUserProfile', WorkerProfileSchema);
-module.exports = WorkerProfileSchema;
+const WorkerUserProfileModel = mongoose.model('WorkerUserProfile', WorkerProfileSchema);
+module.exports = WorkerUserProfileModel;

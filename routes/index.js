@@ -2,7 +2,7 @@
 
 const express=require("express");
 const router=express.Router();
-const ownerProfileRouter=require('./OwnerProfile');
+const ownerProfileRouter=require('./OwnerProfileRoutes');
 // const mailRouter=require('./mail');
 
 

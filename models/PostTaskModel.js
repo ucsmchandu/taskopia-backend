@@ -56,5 +56,5 @@ const PostTaskSchema=new mongoose.Schema({
     },   
 },{timestamps:true})
 
-const PostTask=mongoose.model('PostJob',PostTaskSchema);
-module.exports=PostTask;
+const PostTaskModel=mongoose.model('PostJob',PostTaskSchema);
+module.exports=PostTaskModel;
