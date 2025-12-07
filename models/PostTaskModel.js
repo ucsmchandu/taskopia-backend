@@ -6,6 +6,10 @@ const PostTaskSchema=new mongoose.Schema({
         ref:"OwnerUserProfile",
         required:true
     },
+    firebaseId:{
+        type:String,
+        required:true
+    },
     taskTitle:{
         type:String,
         required:true,

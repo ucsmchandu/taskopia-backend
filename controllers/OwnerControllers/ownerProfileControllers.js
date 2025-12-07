@@ -38,7 +38,10 @@ const uploadProfile=async(req,res)=>{
             }],
         })
         await newOwnerProfile.save();
-        return res.json({message:"Owner profile is saved successfully",newOwnerProfile});
+        return res.json({message:"Owner profile is saved successfully",
+            profileId:newOwnerProfile._id,
+            profileData:newOwnerProfile
+        });
     }catch(err){
         console.log(err);
         console.log(err.message);
