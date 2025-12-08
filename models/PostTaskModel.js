@@ -1,11 +1,11 @@
 const mongoose=require('mongoose');
 
 const PostTaskSchema=new mongoose.Schema({
-    userUid:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:"OwnerUserProfile",
-        required:true
-    },
+    // userUid:{
+    //     type:mongoose.Schema.Types.ObjectId,
+    //     ref:"OwnerUserProfile",
+    //     required:true
+    // },
     firebaseId:{
         type:String,
         required:true
@@ -35,6 +35,10 @@ const PostTaskSchema=new mongoose.Schema({
         required:true,
         trim:true
     },
+    email:{
+        type:String,
+        required:true
+    },
     urgency:{
         type:String,
         required:true
@@ -60,5 +64,5 @@ const PostTaskSchema=new mongoose.Schema({
     },   
 },{timestamps:true})
 
-const PostTaskModel=mongoose.model('PostJob',PostTaskSchema);
+const PostTaskModel=mongoose.model('ActiveTask',PostTaskSchema);
 module.exports=PostTaskModel;

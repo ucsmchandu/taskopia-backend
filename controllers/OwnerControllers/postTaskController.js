@@ -1,5 +1,50 @@
-const uploadTask=()=>{
-    console.log("hello from post task controller");
+const PostTaskModel=require('../../models/PostTaskModel');
+const uploadTask=async(req,res)=>{
+    try{
+        const {
+            firebaseId,
+            email,
+            title,
+            taskDescription,
+            taskCategory,
+            location,
+            amount,
+            urgencyLevel,
+            startingDate,
+            endingDate,
+            workingHours,
+            postRemovingDate,
+            attachments  //url
+        }=req.body;
+        
+        const newTask=new PostTaskModel({
+            firebaseId:firebaseId,
+            taskTitle:title,
+            description:taskDescription,
+            taskCategory:taskCategory,
+            budget:amount,
+            address:location,
+            email:email,
+            urgency:urgencyLevel,
+            startingDate:startingDate,
+            endingDate:endingDate,
+            workingHours:workingHours,
+            postRemovingDate:postRemovingDate,
+            attachments:attachments
+        });
+        await newTask.save();
+        return res.status(200).json({
+            message:"Task Uploaded successful",
+            taskId:newTask._id,
+            uploadTask:"true"
+        });
+    }catch(err){
+        console.log(err);
+        console.log(err.message);
+        return res.status(500).json({
+            message:"Uploading task is incomplete",
+            uploadTask:"false"
+        })
+    }
 }
-
 module.exports={uploadTask};
