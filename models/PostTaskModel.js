@@ -60,7 +60,7 @@ const PostTaskSchema=new mongoose.Schema({
         required:true
     },
     attachments:{
-        url:String,
+        type:String,
     },   
 },{timestamps:true})
 

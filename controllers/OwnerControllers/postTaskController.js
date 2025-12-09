@@ -16,7 +16,8 @@ const uploadTask=async(req,res)=>{
             postRemovingDate,
             attachments  //url
         }=req.body;
-        
+        // console.log(attachments);
+        // console.log("img url :",req.file.path);
         const newTask=new PostTaskModel({
             firebaseId:firebaseId,
             taskTitle:title,
@@ -30,7 +31,7 @@ const uploadTask=async(req,res)=>{
             endingDate:endingDate,
             workingHours:workingHours,
             postRemovingDate:postRemovingDate,
-            attachments:attachments
+            attachments:req.file?.path || null
         });
         await newTask.save();
         return res.status(200).json({
