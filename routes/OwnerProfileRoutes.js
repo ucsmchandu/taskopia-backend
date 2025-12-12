@@ -1,7 +1,7 @@
 const express=require('express');
 const ownerProfileRouter=express.Router();
 const {uploadProfile,getProfile}=require('../controllers/OwnerControllers/ownerProfileControllers')
-const {getPublicOwnerProfile}=require('../controllers/OwnerControllers/ownerPublicProfile');
+const {getPublicOwnerProfile}=require('../controllers/OwnerControllers/ownerPublicProfileController');
 const upload=require('../utils/multer')
 
 // to upload the owner profile
