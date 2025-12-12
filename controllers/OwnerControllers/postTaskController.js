@@ -1,4 +1,4 @@
-const PostTaskModel=require('../../models/PostTaskModel');
+const PostTaskModel=require('../../models/OwnerModels/PostTaskModel');
 const uploadTask=async(req,res)=>{
     try{
         const {

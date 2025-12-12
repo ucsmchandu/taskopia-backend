@@ -1,4 +1,4 @@
-const OwnerUserProfileModel=require("../../models/OwnerUserProfileModel")
+const OwnerUserProfileModel=require("../../models/OwnerModels/OwnerUserProfileModel")
 const getPublicOwnerProfile=async(req,res)=>{
     try{
         //get the id from the url

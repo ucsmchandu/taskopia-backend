@@ -1,4 +1,4 @@
-const OwnerUserProfileModel=require('../../models/OwnerUserProfileModel')
+const OwnerUserProfileModel=require('../../models/OwnerModels/OwnerUserProfileModel')
 
 // to upload the owner profile data
 const uploadProfile=async(req,res)=>{
