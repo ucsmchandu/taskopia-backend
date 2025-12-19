@@ -1,9 +1,9 @@
 const mongoose=require('mongoose');
 
 const ApplyTaskSchema=new mongoose.Schema({
-    workerUid:{
+    allyUid:{
         type:mongoose.Schema.Types.ObjectId,
-        ref:'WorkerUserProfile',
+        ref:'AllyUserProfile',
         required:true
     },
     taskUid:{
@@ -19,7 +19,7 @@ const ApplyTaskSchema=new mongoose.Schema({
         type:String,
         required:true
     },
-    workerMessage:{
+    allyMessage:{
         type:String,
         maxLength:[100,'Message cannot be exceed 100 characters']
     }

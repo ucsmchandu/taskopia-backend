@@ -1,9 +1,9 @@
-const OwnerUserProfileModel=require("../../models/OwnerModels/OwnerUserProfileModel")
-const getPublicOwnerProfile=async(req,res)=>{
+const HostProfileModel=require("../../models/HostModels/HostProfileModel")
+const getPublicHostProfile=async(req,res)=>{
     try{
         //get the id from the url
         const _id=req.params.publicId;
-        const profileData=await OwnerUserProfileModel.findById({_id});
+        const profileData=await HostProfileModel.findById({_id});
         if(!profileData)
             return res.status(404).json({message:"User Profile Not Found"});
         return res.status(200).json({profileData:profileData});
@@ -14,4 +14,4 @@ const getPublicOwnerProfile=async(req,res)=>{
     }
 }
 
-module.exports={getPublicOwnerProfile}
+module.exports={getPublicHostProfile}

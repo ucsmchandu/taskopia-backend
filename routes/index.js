@@ -2,17 +2,14 @@
 
 const express=require("express");
 const router=express.Router();
-const ownerProfileRouter=require('./OwnerProfileRoutes');
-const postTaskRouter=require('./PostTaskRoutes');
+const hostProfileRouter=require('./host.profile.routes');
 
 // const mailRouter=require('./mail');
 //  router.use('/mail',mailRouter);
 
-// router to upload,get private profile and get public profile of the owner
-router.use('/owner-profile',ownerProfileRouter);
+// router to upload,get private profile and get public profile of the host
+router.use('/host-profile',hostProfileRouter);
 
-// router for owner to post the task by owner
-router.use('/owner/task',postTaskRouter)
 
 
 

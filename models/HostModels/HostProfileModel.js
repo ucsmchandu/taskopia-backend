@@ -1,10 +1,10 @@
 const mongoose = require('mongoose')
 
-const OwnerProfileSchema = new mongoose.Schema({
+const HostProfileSchema = new mongoose.Schema({
     firebaseUid: {
         type: String,
         required: true,
-        unique:true // this also indexing to the attribute so need to create a seperate indexing
+        unique:true // this also indexing to the attribute so no need to create a seperate indexing
     },
     userProfilePhotoUrl: {
         type: String,
@@ -37,7 +37,6 @@ const OwnerProfileSchema = new mongoose.Schema({
         required: true,
         trim: true,
         unique:true,
-        trim:true,
         match: [/^(?:\+91)?[9876]\d{9}$/, 'Please enter valid phone number']
     },
     gmail: {
@@ -120,7 +119,7 @@ const OwnerProfileSchema = new mongoose.Schema({
 },{timestamps:true});
 
 // applying indexing to user on firebase uid to find the user faster
-// OwnerProfileSchema.index({firebaseUid:1},{unique:true});
+// HostProfileSchema.index({firebaseUid:1},{unique:true});
 
-const OwnerUserProfileModel=mongoose.model('OwnerUserProfile',OwnerProfileSchema);
-module.exports=OwnerUserProfileModel;
+const HostProfileModel=mongoose.model('HostProfile',HostProfileSchema);
+module.exports=HostProfileModel;

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const WorkerProfileSchema = new mongoose.Schema({
+const AllyProfileSchema = new mongoose.Schema({
     firebaseUid: {
         type: String,
         required: true,
@@ -101,5 +101,5 @@ const WorkerProfileSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-const WorkerUserProfileModel = mongoose.model('WorkerUserProfile', WorkerProfileSchema);
-module.exports = WorkerUserProfileModel;
+const AllyProfileModel = mongoose.model('AllyProfile', AllyProfileSchema);
+module.exports = AllyProfileModel;

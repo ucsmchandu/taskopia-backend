@@ -3,7 +3,7 @@ const mongoose=require('mongoose');
 const PostTaskSchema=new mongoose.Schema({
     // userUid:{
     //     type:mongoose.Schema.Types.ObjectId,
-    //     ref:"OwnerUserProfile",
+    //     ref:"HostUserProfile",
     //     required:true
     // },
     firebaseId:{
