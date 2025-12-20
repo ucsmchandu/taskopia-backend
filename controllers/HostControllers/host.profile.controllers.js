@@ -110,20 +110,20 @@ const editProfile = async (req, res) => {
         landmark,
         description
     } = req.body;
-    const updates={};
-    if(firstName) updates.firstName=firstName
-    if(lastName) updates.lastName=lastName
-    if(businessName) updates.businessName=businessName
-    if(phone) updates.phone=phone
-    if(gmail) updates.gmail=gmail
-    if(state) updates.state=state 
-    if(city) updates.city=city
-    if(pincode) updates.pincode=pincode
-    if(address) updates.address=address
-    if(landmark) updates.landmark=landmark
-    if(description) updates.description=description
+    const updates = {};
+    if (firstName) updates.firstName = firstName
+    if (lastName) updates.lastName = lastName
+    if (businessName) updates.businessName = businessName
+    if (phone) updates.phone = phone
+    if (gmail) updates.gmail = gmail
+    if (state) updates.state = state
+    if (city) updates.city = city
+    if (pincode) updates.pincode = pincode
+    if (address) updates.address = address
+    if (landmark) updates.landmark = landmark
+    if (description) updates.description = description
 
-    
+
 
 
 }

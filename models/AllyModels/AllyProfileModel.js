@@ -34,20 +34,12 @@ const AllyProfileSchema = new mongoose.Schema({
         trim: true,
         match: [/^(?:\+91)?[9876]\d{9}$/, 'Please enter valid phone number']
     },
-    skills: {
-        type: [String],
-        required: true
-    },
     gmail: {
         type: String,
         required: true,
         trim: true,
         unique: true,
         match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter valid email ']
-    },
-    availability: {
-        type: String,
-        required: true
     },
     rating: {
         average: {

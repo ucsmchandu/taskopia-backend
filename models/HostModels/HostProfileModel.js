@@ -4,7 +4,7 @@ const HostProfileSchema = new mongoose.Schema({
     firebaseUid: {
         type: String,
         required: true,
-        unique:true // this also indexing to the attribute so no need to create a seperate indexing
+        unique: true // this also indexing to the attribute so no need to create a seperate indexing
     },
     userProfilePhotoUrl: {
         type: String,
@@ -36,14 +36,14 @@ const HostProfileSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true,
-        unique:true,
+        unique: true,
         match: [/^(?:\+91)?[9876]\d{9}$/, 'Please enter valid phone number']
     },
     gmail: {
         type: String,
         required: true,
         trim: true,
-        unique:true,
+        unique: true,
         match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter valid email ']
     },
     adminVerify: {
@@ -51,30 +51,26 @@ const HostProfileSchema = new mongoose.Schema({
         default: false,
     },
     rating: {
-        average:{
-            type:Number,
-            min:0,
-            max:5,
-            default:0
+        average: {
+            type: Number,
+            min: 0,
+            max: 5,
+            default: 0
         },
-        count:{
-            type:Number,
-            default:0
+        count: {
+            type: Number,
+            default: 0
         }
     },
-    reviews:[{
-        user:{
-            type:mongoose.Schema.Types.ObjectId,
-            ref:'UserProfile'
-        },
-        comment:String,
-        createdAt:{ type:Date,default:Date.now }
-    }],
-    addressDetails: [{
-        user:{
-            type:mongoose.Schema.Types.ObjectId,
-            ref:'UserProfile'
-        },
+    // reviews:[{
+    //     user:{
+    //         type:mongoose.Schema.Types.ObjectId,
+    //         ref:'UserProfile'
+    //     },
+    //     comment:String,
+    //     createdAt:{ type:Date,default:Date.now }
+    // }],
+    addressDetails: {
         state: {
             type: String,
             required: true,
@@ -103,8 +99,7 @@ const HostProfileSchema = new mongoose.Schema({
             trim: true,
             maxLength: [100, 'Land mark cannot exceed 100 characters']
         }
-
-    }],
+    },
     status: {
         type: String,
         enum: ['active', 'suspended', 'permanentlyBlocked'],
@@ -116,10 +111,10 @@ const HostProfileSchema = new mongoose.Schema({
         minLength: [5, 'Description is at least 5 characters'],
         maxLength: [150, 'Description cannot exceed 150 characters']
     }
-},{timestamps:true});
+}, { timestamps: true });
 
 // applying indexing to user on firebase uid to find the user faster
 // HostProfileSchema.index({firebaseUid:1},{unique:true});
 
-const HostProfileModel=mongoose.model('HostProfile',HostProfileSchema);
-module.exports=HostProfileModel;
+const HostProfileModel = mongoose.model('HostProfile', HostProfileSchema);
+module.exports = HostProfileModel;

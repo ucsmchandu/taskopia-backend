@@ -11,6 +11,7 @@ hostProfileRouter.post('/upload/profile', upload.fields([
     { name: "businessProfilePhotoUrl", maxCount: 1 }
 ]), uploadProfile);
 
+// to upload the task
 hostProfileRouter.post('/upload-task',
     upload.single("attachments")
     , uploadTask);
