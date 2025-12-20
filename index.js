@@ -2,7 +2,7 @@ require('dotenv').config();
 const express=require("express");
 const cors=require('cors');
 const connectDB=require('./db')
- const route=require('./routes/index'); // import from the routes folder
+ const route=require('./src/routes/index'); // import from the routes folder
 
 connectDB();
 const app=express();
