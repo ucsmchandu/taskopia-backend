@@ -4,7 +4,8 @@ const HostProfileSchema = new mongoose.Schema({
     firebaseUid: {
         type: String,
         required: true,
-        unique: true // this also indexing to the attribute so no need to create a seperate indexing
+        unique: true ,
+        trim:true// this also indexing to the attribute so no need to create a seperate indexing
     },
     userProfilePhotoUrl: {
         type: String,

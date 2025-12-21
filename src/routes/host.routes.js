@@ -1,7 +1,7 @@
 const express = require('express');
 const hostProfileRouter = express.Router();
 const { uploadTask } = require("../controllers/HostControllers/post.task.controller");
-const { uploadProfile, getProfile, editProfile } = require('../controllers/HostControllers/host.profile.controllers')
+const { uploadProfile, getProfile, editProfile, editProfileViaJson } = require('../controllers/HostControllers/host.profile.controllers')
 const { getPublicHostProfile } = require('../controllers/HostControllers/host.public.profile.controller');
 const upload = require('../utils/multer')
 
@@ -23,7 +23,13 @@ hostProfileRouter.get('/get/profile/:firebaseId', getProfile);
 // the one user can watch others
 hostProfileRouter.get('/get/public-profile/:publicId', getPublicHostProfile);
 
-// this api is for editing the host profile
-hostProfileRouter.put('/edit/profile', editProfile)
+// this api is for editing the host profile with including the profile pictures (using multikart data)
+hostProfileRouter.patch('/edit/profile/:firebaseUid', upload.fields([
+    { name: "userProfilePhotoUrl", maxCount: 1 },
+    { name: "businessProfilePhotoUrl", maxCount: 1 }
+]), editProfile)
+
+// this api is for updating the host profile without profile pictures (using json)
+hostProfileRouter.patch('/edit/profile/:firebaseUid/json',editProfileViaJson);
 
 module.exports = hostProfileRouter;

@@ -12,6 +12,7 @@ app.use(cors({
     credentials:true
 }))
 app.use(express.json());
+app.use(express.urlencoded({extended:true}))
 app.use('/taskopia/u1/api',route);
 // app.get("/",(req,res)=>{
 //     res.send("hello world");

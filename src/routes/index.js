@@ -2,7 +2,7 @@
 
 const express = require("express");
 const router = express.Router();
-const hostProfileRouter = require('./host.profile.routes');
+const hostProfileRouter = require('./host.routes');
 
 // const mailRouter=require('./mail');
 //  router.use('/mail',mailRouter);
