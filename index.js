@@ -3,6 +3,7 @@ const express=require("express");
 const cors=require('cors');
 const connectDB=require('./db')
  const route=require('./src/routes/index'); // import from the routes folder
+const cookieParser = require('cookie-parser');
 
 connectDB();
 const app=express();
@@ -12,11 +13,9 @@ app.use(cors({
     credentials:true
 }))
 app.use(express.json());
+app.use(cookieParser())
 app.use(express.urlencoded({extended:true}))
 app.use('/taskopia/u1/api',route);
-// app.get("/",(req,res)=>{
-//     res.send("hello world");
-// })
 
 
 

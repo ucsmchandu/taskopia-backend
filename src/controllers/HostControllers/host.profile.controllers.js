@@ -2,10 +2,14 @@ const HostProfileModel = require('../../models/HostModels/HostProfileModel')
 
 // to upload the host profile data
 const uploadProfile = async (req, res) => {
+    const {uid,email,email_verified}=req.firebaseUser;
+        // console.log(uid);
+        // console.log(email);
+        // console.log(email_verified);
     try {
         // these are from frontend
         const {
-            firebaseUid,
+            // firebaseUid,
             firstName,
             lastName,
             businessName,
@@ -20,7 +24,7 @@ const uploadProfile = async (req, res) => {
         } = req.body;
         // here the two image urls are comes from the middleware which uses cloudinary to store the images
         const newHostProfile = new HostProfileModel({
-            firebaseUid: firebaseUid,
+            firebaseUid: uid,
             userProfilePhotoUrl: req.files?.userProfilePhotoUrl?.[0]?.path,
             businessProfilePhotoUrl: req.files?.businessProfilePhotoUrl?.[0]?.path,
             firstName: firstName,
@@ -53,12 +57,17 @@ const uploadProfile = async (req, res) => {
 
 const getProfile = async (req, res) => {
     try {
+        const {uid,email,email_verified,name}=req.firebaseUser;
+        // console.log(uid);
+        // console.log(email);
+        // console.log(email_verified);
+        // console.log(name);
         // const {firebaseId}=req.body;
-        const firebaseId = req.params.firebaseId;
+        // const firebaseId = req.params.firebaseId;
         const profileData = await HostProfileModel.findOne({
-            firebaseUid: firebaseId
+            firebaseUid: uid
         });
-        console.log(firebaseId)
+        // console.log(firebaseId)
         if (!profileData)
             return res.status(404).json({ message: "user not found" });
         return res.status(200).json({ profileData: profileData });
@@ -71,11 +80,14 @@ const getProfile = async (req, res) => {
 
 // this only supports the data with files only plain json is not supported
 const editProfile = async (req, res) => {
-
-    const firebaseUid = req.params.firebaseUid;
+    const {uid,email,email_verified}=req.firebaseUser;
+        // console.log(uid);
+        // console.log(email);
+        // console.log(email_verified);
+    // const firebaseUid = req.params.firebaseUid;
     try {
         // finds the host old profile
-        const profile = await HostProfileModel.findOne({ firebaseUid: firebaseUid });
+        const profile = await HostProfileModel.findOne({ firebaseUid: uid });
         if (!profile)
             return res.status(404).json({ message: "Host Not found!" });
         // console.log(profile._id);
@@ -102,7 +114,7 @@ const editProfile = async (req, res) => {
 
         // console.log(updates);
         const updatedProfile = await HostProfileModel.findOneAndUpdate(
-            { firebaseUid },
+            { uid },
             { $set: updates },
             { new: true, runValidators: true }
         );
@@ -120,9 +132,13 @@ const editProfile = async (req, res) => {
 
 // to update the profile only by json it does not support files
 const editProfileViaJson = async (req, res) => {
+    const {uid,email,email_verified}=req.firebaseUser;
+        // console.log(uid);
+        // console.log(email);
+        // console.log(email_verified);
     try {
-        const firebaseUid = req.params.firebaseUid;
-        const profile = await HostProfileModel.findOne({ firebaseUid });
+        // const firebaseUid = req.params.firebaseUid;
+        const profile = await HostProfileModel.findOne({ uid });
         if (!profile) return res.status(404).json({ message: "Host not found" });
 
         const updates = {};
@@ -142,7 +158,7 @@ const editProfileViaJson = async (req, res) => {
         if (Object.keys(addrUpdates).length) updates.addressDetails = addrUpdates;
         // console.log(updates);
         const updatedProfile = await HostProfileModel.findOneAndUpdate(
-            { firebaseUid }, { $set: updates }, { new: true, runValidators: true }
+            { uid }, { $set: updates }, { new: true, runValidators: true }
         );
         res.json({ success: true, data: updatedProfile });
     } catch (err) {

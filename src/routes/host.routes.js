@@ -4,9 +4,9 @@ const { uploadTask } = require("../controllers/HostControllers/post.task.control
 const { uploadProfile, getProfile, editProfile, editProfileViaJson } = require('../controllers/HostControllers/host.profile.controllers')
 const { getPublicHostProfile } = require('../controllers/HostControllers/host.public.profile.controller');
 const upload = require('../utils/multer')
-
+const checkAuth=require('../middlewares/auth.middleware')
 // to upload the host profile
-hostProfileRouter.post('/upload/profile', upload.fields([
+hostProfileRouter.post('/upload/profile', checkAuth,upload.fields([
     { name: "userProfilePhotoUrl", maxCount: 1 },
     { name: "businessProfilePhotoUrl", maxCount: 1 }
 ]), uploadProfile);
@@ -17,19 +17,19 @@ hostProfileRouter.post('/upload-task',
     , uploadTask);
 
 // to get the host details using firebase uid only for the host to see their profile details 
-hostProfileRouter.get('/get/profile/:firebaseId', getProfile);
+hostProfileRouter.get('/get/profile/:firebaseId', checkAuth ,getProfile);
 
 // this api route is for public random profile data 
 // the one user can watch others
-hostProfileRouter.get('/get/public-profile/:publicId', getPublicHostProfile);
+hostProfileRouter.get('/get/public-profile/:publicId',checkAuth ,getPublicHostProfile);
 
 // this api is for editing the host profile with including the profile pictures (using multikart data)
-hostProfileRouter.patch('/edit/profile/:firebaseUid', upload.fields([
+hostProfileRouter.patch('/edit/profile/:firebaseUid',checkAuth ,upload.fields([
     { name: "userProfilePhotoUrl", maxCount: 1 },
     { name: "businessProfilePhotoUrl", maxCount: 1 }
 ]), editProfile)
 
 // this api is for updating the host profile without profile pictures (using json)
-hostProfileRouter.patch('/edit/profile/:firebaseUid/json',editProfileViaJson);
+hostProfileRouter.patch('/edit/profile/:firebaseUid/json',checkAuth,editProfileViaJson);
 
 module.exports = hostProfileRouter;
