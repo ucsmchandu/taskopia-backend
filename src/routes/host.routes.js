@@ -1,6 +1,5 @@
 const express = require('express');
 const hostProfileRouter = express.Router();
-const { uploadTask } = require("../controllers/HostControllers/post.task.controller");
 const { uploadProfile, getProfile, editProfile, editProfileViaJson,getPublicHostProfile } = require('../controllers/HostControllers/host.profile.controllers')
 const upload = require('../utils/multer')
 const checkAuth=require('../middlewares/auth.middleware')
@@ -9,11 +8,6 @@ hostProfileRouter.post('/upload/profile', checkAuth,upload.fields([
     { name: "userProfilePhotoUrl", maxCount: 1 },
     { name: "businessProfilePhotoUrl", maxCount: 1 }
 ]), uploadProfile);
-
-// to upload the task
-hostProfileRouter.post('/upload-task',
-    upload.single("attachments")
-    , uploadTask);
 
 // to get the host details using firebase uid only for the host to see their profile details 
 hostProfileRouter.get('/get/profile/:firebaseId', checkAuth ,getProfile);

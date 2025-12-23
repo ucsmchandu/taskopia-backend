@@ -4,6 +4,7 @@ const express = require("express");
 const router = express.Router();
 const hostProfileRouter = require('./host.routes');
 const userRouter=require('./user.routes');
+const taskRouter = require("./task.routes");
 // const mailRouter=require('./mail');
 //  router.use('/mail',mailRouter);
 
@@ -12,7 +13,7 @@ router.use('/host-profile', hostProfileRouter);
 
 router.use('/auth',userRouter);
 
-
+router.use('/tasks',taskRouter);
 
 
 module.exports = router;

@@ -1,8 +1,9 @@
-const PostTaskModel=require('../../models/HostModels/PostTaskModel');
-const uploadTask=async(req,res)=>{
-    try{
+const PostTaskModel = require('../../models/HostModels/PostTaskModel');
+
+const uploadTask = async (req, res) => {
+    const { uid, userId } = req.firebaseUser;
+    try {
         const {
-            firebaseId,
             email,
             title,
             taskDescription,
@@ -15,37 +16,142 @@ const uploadTask=async(req,res)=>{
             workingHours,
             postRemovingDate,
             attachments  //url
-        }=req.body;
+        } = req.body;
         // console.log(attachments);
         // console.log("img url :",req.file.path);
-        const newTask=new PostTaskModel({
-            firebaseId:firebaseId,
-            taskTitle:title,
-            description:taskDescription,
-            taskCategory:taskCategory,
-            budget:amount,
-            address:location,
-            email:email,
-            urgency:urgencyLevel,
-            startingDate:startingDate,
-            endingDate:endingDate,
-            workingHours:workingHours,
-            postRemovingDate:postRemovingDate,
-            attachments:req.file?.path || null
+        const newTask = new PostTaskModel({
+            firebaseId: uid,
+            taskTitle: title,
+            description: taskDescription,
+            taskCategory: taskCategory,
+            budget: amount,
+            address: location,
+            email: email,
+            urgency: urgencyLevel,
+            startingDate: startingDate,
+            endingDate: endingDate,
+            workingHours: workingHours,
+            postRemovingDate: postRemovingDate,
+            attachments: req.file?.path || null, // if the file is there attach it otherwise make it null (this data can be send by form data)
+            createdBy: userId
         });
         await newTask.save();
         return res.status(200).json({
-            message:"Task Uploaded successful",
-            taskId:newTask._id,
-            uploadTask:"true"
+            message: "Task Uploaded successful",
+            taskId: newTask._id,
+            uploadTask: "true"
         });
-    }catch(err){
+    } catch (err) {
         console.log(err);
         console.log(err.message);
         return res.status(500).json({
-            message:"Uploading task is incomplete",
-            uploadTask:"false"
+            message: "Uploading task is incomplete",
+            uploadTask: "false"
         })
     }
 }
-module.exports={uploadTask};
+
+const getAllTasks = async (req, res) => {
+    try {
+        const getTasks = await PostTaskModel.find({});
+        if (!getTasks)
+            return res.status(404).json({ message: "Tasks not found" });
+
+        return res.status(200).json({
+            tasks: getTasks
+        });
+    } catch (err) {
+        console.log(err);
+        console.log(err.message);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}
+
+const getTask = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const event = await PostTaskModel.findById(id);
+        if (!event)
+            return res.status(404).json({ message: "Event not found" });
+        return res.status(200).json({
+            event: event
+        });
+    } catch (err) {
+        console.log(err);
+        console.log(err.message);
+        res.status(500).json({
+            message: "Internal Server Error"
+        })
+    }
+}
+
+const deleteTask = async (req, res) => {
+    try {
+        const id = req.params.taskId;
+        const task = await PostTaskModel.findById(id);
+        if (!task)
+            return res.status(404).json({ message: "Event not found" });
+        if (task.createdBy.toString() !== req.firebaseUser.userId)
+            return res.status(403).json({ message: "Not Authorized" })
+        const deletedTask = await PostTaskModel.findByIdAndDelete(id);
+        if (!deletedTask) {
+            return res.status(400).json({ message: "Error occur while task is deleting" })
+        }
+        return res.status(200).json({
+            message: "Task Deleted",
+            deletedTask
+        });
+    } catch (err) {
+        console.log(err)
+        console.log(err.message)
+        res.status(500).json({
+            message: "Internal Server Error"
+        })
+    }
+}
+
+const editTask = async (req, res) => {
+    try {
+        const uid = req.firebaseUser.uid;
+        const userId = req.firebaseUser.userId;
+        const taskId = req.params.id;
+        // console.log(req.file);
+        if (!taskId)
+            return res.status(404).json({ message: "Task not Found" });
+
+        const event = await PostTaskModel.findById(taskId);
+        if (!event)
+            return res.status(404).json({ message: "Task not found" });
+
+        if (event.createdBy.toString() !== userId)
+            return res.status(403).json({ message: "Not authorized" })
+
+        const updates = {};
+
+        const fields = ["taskTitle", "description", "budget", "address", "email", "urgency", "startingDate", "endingDate", "workingHours", "postRemovingDate"];
+
+        fields.forEach((field) => { if (req.body[field] !== undefined) updates[field] = req.body[field]; })
+        
+        if(req.file?.path.length) updates.attachments=req.file?.path;
+
+        const editedTask = await PostTaskModel.findByIdAndUpdate(
+            taskId,
+            {$set:updates},
+            { new: true, runValidators:true }
+        )
+        res.status(200).json({
+            message: "Task Updated Successfully",
+            updatedTask: editedTask
+        })
+    } catch (err) {
+        console.log(err);
+        console.log(err.message);
+        res.status(500).json({
+            message: "Internal Server Error"
+        })
+    }
+}
+
+
+
+module.exports = { uploadTask, getAllTasks, deleteTask, getTask, editTask };
