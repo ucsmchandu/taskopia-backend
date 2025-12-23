@@ -1,8 +1,7 @@
 const express = require('express');
 const hostProfileRouter = express.Router();
 const { uploadTask } = require("../controllers/HostControllers/post.task.controller");
-const { uploadProfile, getProfile, editProfile, editProfileViaJson } = require('../controllers/HostControllers/host.profile.controllers')
-const { getPublicHostProfile } = require('../controllers/HostControllers/host.public.profile.controller');
+const { uploadProfile, getProfile, editProfile, editProfileViaJson,getPublicHostProfile } = require('../controllers/HostControllers/host.profile.controllers')
 const upload = require('../utils/multer')
 const checkAuth=require('../middlewares/auth.middleware')
 // to upload the host profile
