@@ -1,9 +1,9 @@
 const jwt = require('jsonwebtoken')
 
-const generateToken = async ({ decoded }, res) => {
+const generateToken = async ({ decoded },userId, res) => {
     const { uid, email, name, email_verified } = decoded;
     try {
-        const token = jwt.sign({ uid, email, email_verified, name }, process.env.JWT_SECRET, {
+        const token = jwt.sign({ uid, email, email_verified, name,userId }, process.env.JWT_SECRET, {
             expiresIn: "7d"
         });
         res.cookie("jwt", token, {

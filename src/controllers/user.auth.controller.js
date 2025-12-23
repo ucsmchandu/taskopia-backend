@@ -35,7 +35,7 @@ const register = async (req, res) => {
         });
 
         if (newUser) {
-            generateToken({ decoded }, res);
+            generateToken({ decoded },newUser._id, res);
 
             await newUser.save();
 
@@ -76,7 +76,7 @@ const login = async (req, res) => {
         const getUser = await User.findOne({ userFirebaseId: uid });
         if (!getUser) return res.status(400).json({ message: "Invalid Credentials" });
 
-        generateToken({ decoded }, res); // fcn to generate and send the jwt token
+        generateToken({ decoded },getUser._id, res); // fcn to generate and send the jwt token
 
         res.status(200).json({
             id: getUser._id,
@@ -128,7 +128,7 @@ const autoSignup = async (req, res) => {
                 userType
             })
 
-            generateToken({decoded},res);
+            generateToken({decoded},newUser._id,res);
 
             await newUser.save();
             return res.status(201).json({
@@ -138,7 +138,7 @@ const autoSignup = async (req, res) => {
                 message: "user verified successfully"
             });
         }else{
-            generateToken({decoded},res);
+            generateToken({decoded},getUser._id,res);
         // if user already exists then we just return the data from the db
         return res.status(200).json({
             id: getUser._id,
@@ -160,7 +160,8 @@ const autoSignup = async (req, res) => {
 const authMe = async (req, res) => {
     try {
         res.json({
-            id: req.firebaseUser.uid,
+            firebaseId: req.firebaseUser.uid,
+            userId:req.firebaseUser.userId,
             email: req.firebaseUser.email,
             verified: req.firebaseUser.email_verified,
             message: "User Authenticated"
