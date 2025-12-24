@@ -137,7 +137,7 @@ const editTask = async (req, res) => {
         const editedTask = await PostTaskModel.findByIdAndUpdate(
             taskId,
             {$set:updates},
-            { new: true, runValidators:true }
+            { new: true }
         )
         res.status(200).json({
             message: "Task Updated Successfully",

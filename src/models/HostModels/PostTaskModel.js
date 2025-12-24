@@ -59,7 +59,30 @@ const PostTaskSchema = new mongoose.Schema({
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
+        ref: "User",
+        required: true
+    },
+    status: {
+        type: String,
+        enum: ["posted", "assigned", "in-progress", "completed", "cancelled"],
+        default: "posted"
+    },
+    assignedAlly: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null
+    },
+    applicationsCount: {
+        type: Number,
+        default: 0
+    },
+    isPaid: {
+        type: Boolean,
+        default: false
+    },
+    isActive: {
+        type: Boolean,
+        default: true
     }
 }, { timestamps: true })
 
