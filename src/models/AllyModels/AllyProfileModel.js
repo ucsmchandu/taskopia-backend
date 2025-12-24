@@ -59,7 +59,7 @@ const AllyProfileSchema = new mongoose.Schema({
         minLength: [5, 'Description is at least 5 characters'],
         maxLength: [150, 'Description cannot exceed 150 characters']
     },
-    addressDetails: [{
+    addressDetails: {
         state: {
             type: String,
             required: true,
@@ -88,7 +88,7 @@ const AllyProfileSchema = new mongoose.Schema({
                 max: [180, 'Longitude must be between -180 and 180']
             }
         },
-    }],
+    },
 
 
 }, { timestamps: true });

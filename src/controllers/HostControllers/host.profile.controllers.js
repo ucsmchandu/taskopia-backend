@@ -106,7 +106,9 @@ const editProfile = async (req, res) => {
                 else addrUpdates[field] = req.body[field];
             }
         });
-        if (Object.keys(addrUpdates).length) updates.addressDetails = addrUpdates;
+        if(Object.keys(addrUpdates).length)
+            updates.addressDetails={};
+        if (Object.keys(addrUpdates).length) updates.addressDetails = {...updates.addressDetails,...addrUpdates};
 
         if (req.files?.businessProfilePhotoUrl?.length) updates.userProfilePhotoUrl = req.files?.businessProfilePhotoUrl?.[0]?.path;
         if (req.files?.businessProfilePhotoUrl?.length) updates.businessProfilePhotoUrl = req.files?.businessProfilePhotoUrl?.[0]?.path;
@@ -114,9 +116,9 @@ const editProfile = async (req, res) => {
 
         // console.log(updates);
         const updatedProfile = await HostProfileModel.findOneAndUpdate(
-            { uid },
+            { firebaseUid:uid },
             { $set: updates },
-            { new: true, runValidators: true }
+            { new: true }
         );
         return res.status(200).json({
             message: "Host profile updated",
@@ -173,8 +175,8 @@ const editProfileViaJson = async (req, res) => {
 const getPublicHostProfile=async(req,res)=>{
     try{
         //get the id from the url
-        const _id=req.params.publicId;
-        const profileData=await HostProfileModel.findById({_id});
+        const id=req.params.publicId;
+        const profileData=await HostProfileModel.findById(id);
         if(!profileData)
             return res.status(404).json({message:"User Profile Not Found"});
         return res.status(200).json({profileData:profileData});
