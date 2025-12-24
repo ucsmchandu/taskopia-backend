@@ -196,4 +196,4 @@ const getPublicHostProfile=async(req,res)=>{
     }
 }
 
-module.exports = { uploadProfile, getProfile, editProfile, editProfileViaJson,getPublicHostProfile };
+module.exports = { uploadProfile, getProfile, editProfile,getPublicHostProfile };

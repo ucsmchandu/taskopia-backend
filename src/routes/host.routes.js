@@ -1,6 +1,6 @@
 const express = require('express');
 const hostProfileRouter = express.Router();
-const { uploadProfile, getProfile, editProfile, editProfileViaJson,getPublicHostProfile } = require('../controllers/HostControllers/host.profile.controllers')
+const { uploadProfile, getProfile, editProfile,getPublicHostProfile } = require('../controllers/HostControllers/host.profile.controllers')
 const upload = require('../utils/multer')
 const checkAuth=require('../middlewares/auth.middleware')
 // to upload the host profile
@@ -23,6 +23,6 @@ hostProfileRouter.patch('/edit/profile',checkAuth ,upload.fields([
 ]), editProfile)
 
 // this api is for updating the host profile without profile pictures (using json)
-hostProfileRouter.patch('/edit/profile/json',checkAuth,editProfileViaJson);
+// hostProfileRouter.patch('/edit/profile/json',checkAuth,editProfileViaJson);
 
 module.exports = hostProfileRouter;
