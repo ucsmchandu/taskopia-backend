@@ -78,6 +78,8 @@ const getProfile = async (req, res) => {
     }
 }
 
+
+// this is also working with files nd without files
 // this only supports the data with files only plain json is not supported
 const editProfile = async (req, res) => {
     const {uid,email,email_verified}=req.firebaseUser;
@@ -106,9 +108,14 @@ const editProfile = async (req, res) => {
                 else addrUpdates[field] = req.body[field];
             }
         });
-        if(Object.keys(addrUpdates).length)
-            updates.addressDetails={};
-        if (Object.keys(addrUpdates).length) updates.addressDetails = {...updates.addressDetails,...addrUpdates};
+        // if(Object.keys(addrUpdates).length)
+        //     updates.addressDetails={};
+        // if (Object.keys(addrUpdates).length) updates.addressDetails = {...updates.addressDetails,...addrUpdates};
+
+        updates.addressDetails={
+            ...profile.addressDetails,
+            ...addrUpdates,
+        }
 
         if (req.files?.businessProfilePhotoUrl?.length) updates.userProfilePhotoUrl = req.files?.businessProfilePhotoUrl?.[0]?.path;
         if (req.files?.businessProfilePhotoUrl?.length) updates.businessProfilePhotoUrl = req.files?.businessProfilePhotoUrl?.[0]?.path;
@@ -132,45 +139,47 @@ const editProfile = async (req, res) => {
     }
 }
 
+
+//  this controller is working but it is optional to use
 // to update the profile only by json it does not support files
-const editProfileViaJson = async (req, res) => {
-    const {uid,email,email_verified}=req.firebaseUser;
-        // console.log(uid);
-        // console.log(email);
-        // console.log(email_verified);
-    try {
-        // const firebaseUid = req.params.firebaseUid;
-        const profile = await HostProfileModel.findOne({ uid });
-        if (!profile) return res.status(404).json({ message: "Host not found" });
+// const editProfileViaJson = async (req, res) => {
+//     const {uid,email,email_verified}=req.firebaseUser;
+//         // console.log(uid);
+//         // console.log(email);
+//         // console.log(email_verified);
+//     try {
+//         // const firebaseUid = req.params.firebaseUid;
+//         const profile = await HostProfileModel.findOne({ uid });
+//         if (!profile) return res.status(404).json({ message: "Host not found" });
 
-        const updates = {};
-        const fields = ["firstName", "lastName", "businessName", "phone", "gmail", "description"];
-        fields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
+//         const updates = {};
+//         const fields = ["firstName", "lastName", "businessName", "phone", "gmail", "description"];
+//         fields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
 
-        // Address
-        const addrFields = ["state", "city", "pincode", "address", "landmark"];
-        const addrUpdates = {};
-        addrFields.forEach(f => {
-            if (req.body[f] !== undefined) {
-                if (f === "landmark") addrUpdates.landMark = req.body[f];
-                else if (f === "pincode") addrUpdates.pinCode = req.body[f];
-                else addrUpdates[f] = req.body[f];
-            }
-        });
-        if (Object.keys(addrUpdates).length) updates.addressDetails = addrUpdates;
-        // console.log(updates);
-        const updatedProfile = await HostProfileModel.findOneAndUpdate(
-            { uid }, { $set: updates }, { new: true, runValidators: true }
-        );
-        res.json({ success: true, data: updatedProfile });
-    } catch (err) {
-        console.log(err);
-        console.log(err.message);
-        res.status(500).json({
-            message: "Internal server Error"
-        })
-    }
-}
+//         // Address
+//         const addrFields = ["state", "city", "pincode", "address", "landmark"];
+//         const addrUpdates = {};
+//         addrFields.forEach(f => {
+//             if (req.body[f] !== undefined) {
+//                 if (f === "landmark") addrUpdates.landMark = req.body[f];
+//                 else if (f === "pincode") addrUpdates.pinCode = req.body[f];
+//                 else addrUpdates[f] = req.body[f];
+//             }
+//         });
+//         if (Object.keys(addrUpdates).length) updates.addressDetails = addrUpdates;
+//         // console.log(updates);
+//         const updatedProfile = await HostProfileModel.findOneAndUpdate(
+//             { uid }, { $set: updates }, { new: true, runValidators: true }
+//         );
+//         res.json({ success: true, data: updatedProfile });
+//     } catch (err) {
+//         console.log(err);
+//         console.log(err.message);
+//         res.status(500).json({
+//             message: "Internal server Error"
+//         })
+//     }
+// }
 
 const getPublicHostProfile=async(req,res)=>{
     try{
