@@ -12,10 +12,9 @@
 const express=require('express')
 const applyTaskRouter=express.Router();
 const checkAuth=require('../middlewares/auth.middleware')
-const {applyTask}=require('../controllers/AllyControllers/apply.task.controller')
+const {applyTask,getApplication}=require('../controllers/AllyControllers/apply.task.controller')
 
 applyTaskRouter.post('/:taskId/apply',checkAuth,applyTask);
-
-
+applyTaskRouter.get('/:taskId/applicants',checkAuth,getApplication)
 
 module.exports=applyTaskRouter;
