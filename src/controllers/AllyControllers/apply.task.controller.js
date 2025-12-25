@@ -247,6 +247,7 @@ const updateApplicationStatus = async (req, res) => {
     }
 }
 
+// to cancel the application
 const cancelApplication = async (req, res) => {
     const session = await mongoose.startSession();
     try {
@@ -340,9 +341,66 @@ const cancelApplication = async (req, res) => {
     }
 }
 
+const checkAllyAppliedTask = async (req, res) => {
+    try {
+        const { uid } = req.firebaseUser;
+        const taskId = req.params.taskId;
+
+        const getAllyProfile = await AllyProfileModel.findOne({ firebaseUid: uid })
+        if (!getAllyProfile)
+            return res.status(404).json({ message: "Ally profile not found" });
+
+        const getTask = await PostTaskModel.findById(taskId)
+        if (!getTask)
+            return res.status(404).json({ message: "Task not found" })
+
+        const getAppliedTask = await ApplyTaskModel.findOne({ task: getTask._id, applicant: getAllyProfile._id });
+        if (!getAppliedTask)
+            return res.status(404).json({ message: "You are not applied to this task", applied: false, application: null })
+
+        return res.status(200).json({
+            message: "Application found",
+            applied: true,
+            application: getAppliedTask
+        })
+    } catch (err) {
+        console.log(err)
+        console.log(err.message)
+        res.status(500).json({ message: "Internal Sever Error" })
+    }
+}
+
+const getApplicationsCount = async (req, res) => {
+    try {
+        const { uid } = req.firebaseUser;
+        const taskId = req.params.taskId
+
+        const getHostProfile = await HostProfileModel.findOne({ firebaseUid: uid });
+        if (!getHostProfile)
+            return res.status(404).json({ message: "Host profile is not found" })
+
+        const getTask = await PostTaskModel.findById(taskId)
+        if (!getTask)
+            return res.status(404).json({ message: "Task not found" })
+
+        if (getHostProfile._id.toString() !== getTask.createdBy.toString())
+            return res.status(403).json({ message: "Not Authorized" })
+
+        const applicationsCount = Math.max(0, getTask.applicationsCount || 0);
+
+        return res.status(200).json({
+            message: "Task found",
+            count: applicationsCount
+        })
+
+    } catch (error) {
+        console.log(error)
+        console.log(error.message)
+        res.status(500).json({ message: "Internal Server Error" })
+    }
+}
 
 
 
 
-
-module.exports = { applyTask, getApplication, getMyApplications, getSingleApplication, updateApplicationStatus, cancelApplication }
+module.exports = { applyTask, getApplication, getMyApplications, getSingleApplication, updateApplicationStatus, cancelApplication, checkAllyAppliedTask, getApplicationsCount }
