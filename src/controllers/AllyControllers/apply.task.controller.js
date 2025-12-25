@@ -1,4 +1,3 @@
-// Method	Endpoint	What it does
 // POST	/tasks/:taskId/apply	Ally applies
 // GET	/tasks/:taskId/applicants	Host sees all applicants
 // GET	/applications/me	Ally sees their applications
@@ -13,6 +12,8 @@ const PostTaskModel = require('../../models/HostModels/PostTaskModel')
 const ApplyTaskModel = require("../../models/AllyModels/ApplyTaskModel")
 const AllyProfileModel = require("../../models/AllyModels/AllyProfileModel")
 const HostProfileModel = require("../../models/HostModels/HostProfileModel")
+const { application } = require('express')
+const { getApp } = require('firebase-admin/app')
 
 // for ally
 const applyTask = async (req, res) => {
@@ -130,15 +131,15 @@ const getMyApplications = async (req, res) => {
 const getSingleApplication = async (req, res) => {
     try {
         const applicationId = req.params.applicationId;
-        const {uid}=req.firebaseUser
+        const { uid } = req.firebaseUser
 
         const getAppliedTask = await ApplyTaskModel.findById(applicationId);
         if (!getAppliedTask)
             return res.status(404).json({ message: "Application not Found" })
 
-        const allyProfile=await AllyProfileModel.findOne({firebaseUid:uid})
-        if(!allyProfile || getAppliedTask.applicant.toString()!==allyProfile._id.toString())
-            return res.status(403).json({message:"Not Authorized"})
+        const allyProfile = await AllyProfileModel.findOne({ firebaseUid: uid })
+        if (!allyProfile || getAppliedTask.applicant.toString() !== allyProfile._id.toString())
+            return res.status(403).json({ message: "Not Authorized" })
 
         return res.status(200).json({
             message: "Task aFound",
@@ -151,8 +152,80 @@ const getSingleApplication = async (req, res) => {
     }
 }
 
+// to update the status of the application
+const updateApplicationStatus = async (req, res) => {
+    try {
+        const applicationId = req.params.id;
+        const { uid } = req.firebaseUser
+        const { status } = req.body;
+        
+        // return if the body is not valid
+        if (!["accepted", "rejected"].includes(status))
+            return res.status(400).json({ message: "Invalid status value" })
+        // here has to update the two models
+        // postTaskModel
+        // ApplyTaskModel
+
+        // get the host profile
+        const getHostProfile = await HostProfileModel.findOne({ firebaseUid: uid })
+        if (!getHostProfile)
+            return res.status(404).json({ message: "Host profile not Found" })
+
+        // get the application
+        const getApplication = await ApplyTaskModel.findById(applicationId);
+        if (!getApplication)
+            return res.status(404).json({ message: "Application not Found" })
+
+        // checking the host if he is not in application then he is not in task model
+        if (getApplication.host.toString() !== getHostProfile._id.toString())
+            return res.status(403).json({ message: "Not Authorized" })
+
+        // updating the application if it is in applied
+        if (getApplication.status !== "applied")
+            return res.status(400).json({ message: "You can only update the applied applications" })
+
+        // get the tasj details
+        const getTask = await PostTaskModel.findById(getApplication.task)
+        if (!getTask)
+            return res.status(404).json({ message: "Task not Found" })
+
+        // action is not done if the task is assigned,compledted,cancelled
+        if (["assigned", "completed", "cancelled"].includes(getTask.status))
+            return res.status(400).json({ message: "Task is no longer accepting decisions" })
+
+        // update the two models
+        if (status === "accepted") {
+            getApplication.status = "accepted";
+            getTask.status = "assigned";
+            getTask.assignedAlly = getApplication.applicant;
+
+            // reject remaing all applications
+            await ApplyTaskModel.updateMany(
+                { task: getTask._id, _id: { $ne: getApplication._id } },
+                { $set: { status: "rejected" } }
+            );
+            await getTask.save();
+        }
+
+        if (status === "rejected") {
+            getApplication.status = "rejected"
+        }
+
+        await getApplication.save();
+
+        return res.status(200).json({
+            message: "Application Updated",
+            application: getApplication
+        })
+    } catch (err) {
+        console.log(err)
+        console.log(err.message)
+        res.status(500).json({ message: "Internal Server Error" })
+    }
+}
 
 
 
 
-module.exports = { applyTask, getApplication, getMyApplications, getSingleApplication }
+
+module.exports = { applyTask, getApplication, getMyApplications, getSingleApplication,updateApplicationStatus }
