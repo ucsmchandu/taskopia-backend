@@ -14,6 +14,7 @@ const ApplyTaskModel = require("../../models/AllyModels/ApplyTaskModel")
 const AllyProfileModel = require("../../models/AllyModels/AllyProfileModel")
 const HostProfileModel = require("../../models/HostModels/HostProfileModel")
 
+// for ally
 const applyTask = async (req, res) => {
     try {
         const { uid } = req.firebaseUser;
@@ -59,14 +60,15 @@ const applyTask = async (req, res) => {
         });
 
     } catch (err) {
-        if(err.code===11000)
-            return res.status(409).json({message:"You already applied to this task"})
+        if (err.code === 11000)
+            return res.status(409).json({ message: "You already applied to this task" })
         console.log(err);
         console.log(err.message);
         res.status(500).json({ message: "Internal Server Error" })
     }
 }
 
+// this is for host to see the applications for the task
 const getApplication = async (req, res) => {
     try {
         const taskId = req.params.taskId;
@@ -100,6 +102,57 @@ const getApplication = async (req, res) => {
     }
 }
 
+// this is for ally to see their applied task
+const getMyApplications = async (req, res) => {
+    try {
+        const { uid } = req.firebaseUser;
+
+        const getProfile = await AllyProfileModel.findOne({ firebaseUid: uid })
+        if (!getProfile)
+            return res.status(404).json({ message: "Ally not found" })
+
+        const appliedTasks = await ApplyTaskModel.find({ applicant: getProfile._id })
+        if (appliedTasks.length === 0)
+            return res.status(404).json({ message: "No applied tasks were found" })
+
+        return res.status(200).json({
+            message: "Applied tasks found",
+            tasks: appliedTasks
+        });
+    } catch (err) {
+        console.log(err)
+        console.log(err.message)
+        res.status(500).json({ message: "Internal Server Error" })
+    }
+}
+
+// this for ally to get one application
+const getSingleApplication = async (req, res) => {
+    try {
+        const applicationId = req.params.applicationId;
+        const {uid}=req.firebaseUser
+
+        const getAppliedTask = await ApplyTaskModel.findById(applicationId);
+        if (!getAppliedTask)
+            return res.status(404).json({ message: "Application not Found" })
+
+        const allyProfile=await AllyProfileModel.findOne({firebaseUid:uid})
+        if(!allyProfile || getAppliedTask.applicant.toString()!==allyProfile._id.toString())
+            return res.status(403).json({message:"Not Authorized"})
+
+        return res.status(200).json({
+            message: "Task aFound",
+            task: getAppliedTask
+        })
+    } catch (err) {
+        console.log(err)
+        console.log(err.message)
+        res.status(500).json({ message: "Internal Server Error" })
+    }
+}
 
 
-module.exports = { applyTask, getApplication }
+
+
+
+module.exports = { applyTask, getApplication, getMyApplications, getSingleApplication }
