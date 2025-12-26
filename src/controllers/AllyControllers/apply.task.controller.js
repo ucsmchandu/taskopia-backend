@@ -13,6 +13,7 @@ const ApplyTaskModel = require("../../models/AllyModels/ApplyTaskModel")
 const AllyProfileModel = require("../../models/AllyModels/AllyProfileModel")
 const HostProfileModel = require("../../models/HostModels/HostProfileModel")
 const mongoose = require('mongoose')
+const { application } = require('express')
 // for ally
 const applyTask = async (req, res) => {
     try {
@@ -400,7 +401,162 @@ const getApplicationsCount = async (req, res) => {
     }
 }
 
+const markTaskCompleted = async (req, res) => {
+    const session = await mongoose.startSession();
+    try {
+        session.startTransaction();
+
+        const { uid } = req.firebaseUser
+        const taskId = req.params.taskId
+
+        // get the task
+        const getTask = await PostTaskModel.findById(taskId).session(session)
+        if (!getTask) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ message: "Task not found" })
+        }
+
+        // get the host
+        const getUser = await HostProfileModel.findOne({ firebaseUid: uid }).session(session)
+        if (!getUser) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ message: "Host not found" })
+        }
+
+        // check the auth
+        if (getTask.createdBy.toString() !== getUser._id.toString()) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(403).json({ message: "Not Authorized" })
+        }
+
+        // get the application
+        const getApplication = await ApplyTaskModel.findOne({ task: taskId }).session(session)
+        if (!getApplication) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ message: "Application not found" })
+        }
+
+        if (["completed", "cancelled"].includes(getTask.status)) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ message: `Task is already ${getTask.status}` })
+        }
+
+        if (["rejected", "cancelled", "completed"].includes(getApplication.status)) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ message: `Application already ${getApplication.status}` });
+        }
+
+        if (!(getApplication.status === "accepted" && getTask.status === "assigned")) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ message: "Task cannot be completed yet. it must be assigned and the application must be accepted" })
+        }
+
+        getApplication.status = "completed"
+        getTask.status = "completed"
+
+        await getApplication.save({ session });
+        await getTask.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        return res.status(200).json({
+            message: "Task marked as completed",
+            task: getTask,
+            application: getApplication
+        })
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        console.log(error)
+        console.log(error.message)
+        res.status(500).json({ message: "Internal Server Error" })
+    }
+}
+
+const cancelTask = async (req, res) => {
+    const session = await mongoose.startSession()
+    try {
+        session.startTransaction();
+        const { uid } = req.firebaseUser
+        const taskId = req.params.taskId
+
+        // get the task
+        const getTask = await PostTaskModel.findById(taskId).session(session)
+        if (!getTask) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ message: "Task not found" })
+        }
+
+        // get the host
+        const getHost = await HostProfileModel.findOne({ firebaseUid: uid }).session(session)
+        if (!getHost) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ message: "Host profile not found" })
+        }
+
+        // check the auth
+        if (getHost._id.toString() !== getTask.createdBy.toString()) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(403).json({ message: "Not Authorized" })
+        }
+
+        if (["completed", "cancelled"].includes(getTask.status)) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ message: `Task is already ${getTask.status}` })
+        }
+
+        // update the applications which not completed and cancelled 
+        await ApplyTaskModel.updateMany(
+            { task: taskId, status: { $nin: ["completed", "cancelled"] } },
+            { $set: { status: "cancelled" } },
+            { session }
+        )
+
+        getTask.status = "cancelled"
+        getTask.assignedAlly = null
+
+        await getTask.save({ session })
+
+        await session.commitTransaction();
+        session.endSession();
+        return res.status(200).json({
+            message: "Task is Cancelled",
+            task: getTask
+        })
+
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        console.log(error)
+        console.log(error.message)
+        res.status(500).json({ message: "Internal Server Error" })
+    }
+}
 
 
 
-module.exports = { applyTask, getApplication, getMyApplications, getSingleApplication, updateApplicationStatus, cancelApplication, checkAllyAppliedTask, getApplicationsCount }
+
+module.exports = {
+    applyTask,
+    getApplication,
+    getMyApplications,
+    getSingleApplication,
+    updateApplicationStatus,
+    cancelApplication,
+    checkAllyAppliedTask,
+    getApplicationsCount,
+    markTaskCompleted,
+    cancelTask
+}
