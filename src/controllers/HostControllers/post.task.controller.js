@@ -1,7 +1,10 @@
 const PostTaskModel = require('../../models/HostModels/PostTaskModel');
-
+const HostProfileModel=require('../../models/HostModels/HostProfileModel')
 const uploadTask = async (req, res) => {
     const { uid, userId } = req.firebaseUser;
+    const findHostProfile=await HostProfileModel.findOne({firebaseUid:uid});
+    if(!findHostProfile)
+        return res.status(404).json({message:"Host profile is not found"});
     try {
         const {
             email,
@@ -33,7 +36,7 @@ const uploadTask = async (req, res) => {
             workingHours: workingHours,
             postRemovingDate: postRemovingDate,
             attachments: req.file?.path || null, // if the file is there attach it otherwise make it null (this data can be send by form data)
-            createdBy: userId
+            createdBy: findHostProfile._id
         });
         await newTask.save();
         return res.status(200).json({

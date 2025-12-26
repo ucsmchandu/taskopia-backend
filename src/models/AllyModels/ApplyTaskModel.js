@@ -1,22 +1,23 @@
-import mongoose from "mongoose";
+const mongoose=require('mongoose')
 
 const applyTaskSchema = new mongoose.Schema(
   {
     task: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "PostTaskModel",
+      ref: "ActiveTask",
       required: true,
     },
 
     applicant: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "AllyProfileModel",   // Ally
+      ref: "AllyProfile",   // Ally
       required: true,
+      unique:true
     },
 
     host: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "HostProfileModel",   // Host
+      ref: "HostProfile",   // Host
       required: true,
     },
 
@@ -41,7 +42,7 @@ const applyTaskSchema = new mongoose.Schema(
     selectedAt: Date,
     completedAt: Date,
 
-    // rating system (optional but powerful!)
+
     // hostRatingForAlly: {
     //   type: Number,
     //   min: 1,
@@ -56,6 +57,8 @@ const applyTaskSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-applyTaskSchema.index({ task: 1, applicant: 1 }, { unique: true });
+applyTaskSchema.index({ task: 1}, { unique: true });
 
-export default mongoose.model("ApplyTask", applyTaskSchema);
+const ApplyTaskModel = mongoose.model("AppliedTask", applyTaskSchema);
+
+module.exports = ApplyTaskModel;

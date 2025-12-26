@@ -39,11 +39,11 @@ const PostTaskSchema = new mongoose.Schema({
         required: true
     },
     startingDate: {
-        type: String,
+        type: Date,
         required: true
     },
     endingDate: {
-        type: String,
+        type: Date,
         required: true
     },
     workingHours: {
@@ -51,7 +51,7 @@ const PostTaskSchema = new mongoose.Schema({
         required: true
     },
     postRemovingDate: {
-        type: String,
+        type: Date,
         required: true
     },
     attachments: {
@@ -59,7 +59,7 @@ const PostTaskSchema = new mongoose.Schema({
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "HostProfile",
         required: true
     },
     status: {
@@ -69,7 +69,7 @@ const PostTaskSchema = new mongoose.Schema({
     },
     assignedAlly: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "AllyProfile",
         default: null
     },
     applicationsCount: {
