@@ -6,49 +6,43 @@ const generateToken = require('../utils/jwtToken');
 const register = async (req, res) => {
     let decoded;
     try {
-        const { firebaseToken, userType } = req.body; // from the frontend
+        const { firebaseToken, userName, email, userType } = req.body;
+        // console.log(firebaseToken) // from the frontend
         if (!firebaseToken)
             return res.status(400).json({ message: "Firebase token is Missing, User not Authenticated" });
         if (!userType)
             return res.status(400).json({ message: "UserType is required" });
 
         decoded = await admin.auth().verifyIdToken(firebaseToken); //checks the firebase token valid or not
+        // console.log(decoded)
 
-        if (!decoded)
-            return res.status(400).json({ message: "Invalid firebase Token!" });
+        if (decoded) {
+            const checkUser = await User.findOne({ userFirebaseId: decoded.uid });
+            // console.log(checkUser);
+            if (checkUser)
+                return res.status(400).json({ message: "User already Exists" });
 
-        const { uid, email, email_verified, name } = decoded;
-
-        if (!email_verified)
-            return res.status(400).json({ message: "User Email is not verified" });
-
-        const checkUser = await User.findOne({ userFirebaseId: uid });
-        // console.log(checkUser);
-        if (checkUser)
-            return res.status(400).json({ message: "User already Exists" });
-
-        const newUser = new User({
-            email,
-            userName: name,
-            userFirebaseId: uid,
-            userType
-        });
-
-        if (newUser) {
-            generateToken({ decoded },newUser._id, res);
-
-            await newUser.save();
-
-            res.status(201).json({
-                id: newUser._id,
-                userType: newUser.userType,
-                email: newUser.email,
-                message: "user verified successfully"
+            const newUser = new User({
+                email,
+                userName,
+                userFirebaseId: decoded.uid,
+                userType
             });
-        } else {
-            return res.status(400).json({
-                message: "Invalid user Data"
-            })
+
+            if (newUser) {
+                await newUser.save();
+
+                res.status(201).json({
+                    id: newUser._id,
+                    userType: newUser.userType,
+                    email: newUser.email,
+                    message: "user verified successfully"
+                });
+            } else {
+                return res.status(400).json({
+                    message: "Invalid user Data"
+                })
+            }
         }
 
     } catch (err) {
@@ -62,7 +56,7 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
     try {
-        const { firebaseToken } = req.body; 
+        const { firebaseToken } = req.body;
 
         if (!firebaseToken)
             return res.status(400).json({ message: "Firebase Token is missing" });
@@ -76,7 +70,7 @@ const login = async (req, res) => {
         const getUser = await User.findOne({ userFirebaseId: uid });
         if (!getUser) return res.status(400).json({ message: "Invalid Credentials" });
 
-        generateToken({ decoded },getUser._id, res); // fcn to generate and send the jwt token
+        generateToken({ decoded }, getUser._id, res); // fcn to generate and send the jwt token
 
         res.status(200).json({
             id: getUser._id,
@@ -108,7 +102,7 @@ const autoSignup = async (req, res) => {
         if (!userType)
             return res.status(400).json({ message: "User type is missing" });
 
-         decoded = await admin.auth().verifyIdToken(firebaseToken);
+        decoded = await admin.auth().verifyIdToken(firebaseToken);
         if (!decoded)
             return res.status(400).json({ message: "Invalid firebase Token!" });
 
@@ -128,7 +122,7 @@ const autoSignup = async (req, res) => {
                 userType
             })
 
-            generateToken({decoded},newUser._id,res);
+            generateToken({ decoded }, newUser._id, res);
 
             await newUser.save();
             return res.status(201).json({
@@ -137,15 +131,17 @@ const autoSignup = async (req, res) => {
                 email: newUser.email,
                 message: "user verified successfully"
             });
-        }else{
-            generateToken({decoded},getUser._id,res);
-        // if user already exists then we just return the data from the db
-        return res.status(200).json({
-            id: getUser._id,
-            userType: getUser.userType,
-            email: getUser.email,
-            message: "user verified successfully"
-        })
+        } else {
+            if (getUser.userType.toString() !== userType)
+                return res.status(400).json({ message: "User not Found. Clearly check the user type" });
+            generateToken({ decoded }, getUser._id, res);
+            // if user already exists then we just return the data from the db
+            return res.status(200).json({
+                id: getUser._id,
+                userType: getUser.userType,
+                email: getUser.email,
+                message: "user verified successfully"
+            })
         }
     } catch (err) {
         console.log(err);
@@ -159,11 +155,14 @@ const autoSignup = async (req, res) => {
 // checks using the jwt token
 const authMe = async (req, res) => {
     try {
+        const id=req.firebaseUser.userId;
+        const user=await User.findById(id);
         res.json({
             firebaseId: req.firebaseUser.uid,
-            userId:req.firebaseUser.userId,
+            userId: req.firebaseUser.userId,
             email: req.firebaseUser.email,
             verified: req.firebaseUser.email_verified,
+            userType:user.userType,
             message: "User Authenticated"
         })
     } catch (err) {
@@ -174,4 +173,4 @@ const authMe = async (req, res) => {
     }
 }
 
-module.exports = { register, login, logout, authMe,autoSignup };
+module.exports = { register, login, logout, authMe, autoSignup };
