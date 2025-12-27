@@ -162,7 +162,7 @@ const authMe = async (req, res) => {
             userId: req.firebaseUser.userId,
             email: req.firebaseUser.email,
             verified: req.firebaseUser.email_verified,
-            userType:user.userType,
+            userType:user ? user.userType : null,
             message: "User Authenticated"
         })
     } catch (err) {
