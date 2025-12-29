@@ -85,7 +85,11 @@ const login = async (req, res) => {
 }
 
 const logout = async (req, res) => {
-    res.cookie("jwt", "", { maxAge: 0, httpOnly: true })
+    res.clearCookie("jwt", {
+        httpOnly: true,
+        secure: true,
+        sameSite:"none",
+    });
     res.status(200).json({
         message: "Logged out successful"
     });
@@ -155,14 +159,14 @@ const autoSignup = async (req, res) => {
 // checks using the jwt token
 const authMe = async (req, res) => {
     try {
-        const id=req.firebaseUser.userId;
-        const user=await User.findById(id);
+        const id = req.firebaseUser.userId;
+        const user = await User.findById(id);
         res.json({
             firebaseId: req.firebaseUser.uid,
             userId: req.firebaseUser.userId,
             email: req.firebaseUser.email,
             verified: req.firebaseUser.email_verified,
-            userType:user ? user.userType : null,
+            userType: user ? user.userType : null,
             message: "User Authenticated"
         })
     } catch (err) {
