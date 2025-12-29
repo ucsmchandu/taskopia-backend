@@ -126,7 +126,7 @@ const editTask = async (req, res) => {
         if (!task)
             return res.status(404).json({ message: "Task not found" });
 
-        if (task.createdBy.toString() !== userId)
+        if (task.createdBy.toString() !== userId.toString())
             return res.status(403).json({ message: "Not authorized" })
 
         const updates = {};
