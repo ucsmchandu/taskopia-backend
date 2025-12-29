@@ -91,10 +91,16 @@ const getTask = async (req, res) => {
 const deleteTask = async (req, res) => {
     try {
         const id = req.params.taskId;
+        const {uid}=req.firebaseUser;
         const task = await PostTaskModel.findById(id);
         if (!task)
             return res.status(404).json({ message: "Event not found" });
-        if (task.createdBy.toString() !== req.firebaseUser.userId)
+
+        const user=await HostProfileModel.findOne({firebaseUid:uid});
+        if(!user)
+            return res.status(404).json({message:"Host Not Found"})
+
+        if (task.createdBy.toString() !== user._id.toString())
             return res.status(403).json({ message: "Not Authorized" })
         const deletedTask = await PostTaskModel.findByIdAndDelete(id);
         if (!deletedTask) {
