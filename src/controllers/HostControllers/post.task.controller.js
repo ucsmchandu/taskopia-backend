@@ -73,11 +73,11 @@ const getAllTasks = async (req, res) => {
 const getTask = async (req, res) => {
     try {
         const id = req.params.id;
-        const event = await PostTaskModel.findById(id);
-        if (!event)
-            return res.status(404).json({ message: "Event not found" });
+        const task = await PostTaskModel.findById(id);
+        if (!task)
+            return res.status(404).json({ message: "Task not found" });
         return res.status(200).json({
-            event: event
+            task: task
         });
     } catch (err) {
         console.log(err);
@@ -122,11 +122,11 @@ const editTask = async (req, res) => {
         if (!taskId)
             return res.status(404).json({ message: "Task not Found" });
 
-        const event = await PostTaskModel.findById(taskId);
-        if (!event)
+        const task = await PostTaskModel.findById(taskId);
+        if (!task)
             return res.status(404).json({ message: "Task not found" });
 
-        if (event.createdBy.toString() !== userId)
+        if (task.createdBy.toString() !== userId)
             return res.status(403).json({ message: "Not authorized" })
 
         const updates = {};
