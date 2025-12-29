@@ -116,7 +116,7 @@ const deleteTask = async (req, res) => {
 const editTask = async (req, res) => {
     try {
         const uid = req.firebaseUser.uid;
-        const userId = req.firebaseUser.userId;
+        // const userId = req.firebaseUser.userId;
         const taskId = req.params.id;
         // console.log(req.file);
         if (!taskId)
@@ -126,7 +126,12 @@ const editTask = async (req, res) => {
         if (!task)
             return res.status(404).json({ message: "Task not found" });
 
-        if (task.createdBy.toString() !== userId.toString())
+        const user=await HostProfileModel.findOne({firebaseUid:uid});
+        if(!user)
+            return res.status(404).json({message:"Host Not Found"})
+
+
+        if (task.createdBy.toString() !== user._id.toString())
             return res.status(403).json({ message: "Not authorized" })
 
         const updates = {};
