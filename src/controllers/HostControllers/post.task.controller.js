@@ -54,6 +54,7 @@ const uploadTask = async (req, res) => {
     }
 }
 
+// for ally
 const getAllTasks = async (req, res) => {
     try {
         const getTasks = await PostTaskModel.find({});
@@ -67,6 +68,29 @@ const getAllTasks = async (req, res) => {
         console.log(err);
         console.log(err.message);
         res.status(500).json({ message: "Internal Server Error" });
+    }
+}
+
+// for host
+const getHostTasks=async(req,res)=>{
+    try{
+        const {uid}=req.firebaseUser;
+        const getHost=await HostProfileModel.findOne({firebaseUid:uid});
+        if(!getHost)
+            return res.status(404).json({message:"Host not found"})
+
+        const getTasks=await PostTaskModel.find({createdBy:getHost._id});
+        if(getTasks.length===0)
+            return res.status(404).json({message:"No Tasks Found"});
+
+        return res.status(200).json({
+            message:"Tasks found",
+            tasks:getTasks
+        });
+    }catch(err){
+        console.log(err)
+        console.log(err.message)
+        res.status(500).json({message:"Internal Server Error"})
     }
 }
 
@@ -168,4 +192,4 @@ const editTask = async (req, res) => {
 
 
 
-module.exports = { uploadTask, getAllTasks, deleteTask, getTask, editTask };
+module.exports = { uploadTask, getAllTasks, deleteTask, getTask, editTask,getHostTasks };
