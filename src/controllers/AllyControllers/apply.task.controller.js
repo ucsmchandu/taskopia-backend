@@ -12,6 +12,7 @@ const PostTaskModel = require('../../models/HostModels/PostTaskModel')
 const ApplyTaskModel = require("../../models/AllyModels/ApplyTaskModel")
 const AllyProfileModel = require("../../models/AllyModels/AllyProfileModel")
 const HostProfileModel = require("../../models/HostModels/HostProfileModel")
+const User=require("../../models/User")
 const mongoose = require('mongoose')
 const { application } = require('express')
 // for ally
@@ -23,6 +24,10 @@ const applyTask = async (req, res) => {
         const allyProfile = await AllyProfileModel.findOne({ firebaseUid: uid });
         if (!allyProfile)
             return res.status(404).json({ message: "User not Found" });
+
+        const user=await User.findOne({userFirebaseId:uid})
+        if(!user)
+            return res.status(404).json({message:"User not found"});
 
         const taskId = req.params.taskId;
         const getTask = await PostTaskModel.findById(taskId);
@@ -40,13 +45,16 @@ const applyTask = async (req, res) => {
             applicant: allyProfile._id,
             host: getTask.createdBy,
             coverMessage: coverMessage,
+            status: "applied",
+            statusHistory: [
+                {
+                    status: "applied",
+                    changedBy: user._id
+                }
+            ]
         });
 
         await newApplication.save();
-
-        // this is not atomic
-        // getTask.applicationsCount+=1;
-        // await getTask.save();
 
         // this is atomic
         await PostTaskModel.findByIdAndUpdate(

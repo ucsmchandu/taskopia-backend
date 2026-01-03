@@ -12,7 +12,7 @@ const applyTaskSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "AllyProfile",   // Ally
       required: true,
-      unique:true
+      // unique:true
     },
 
     host: {
@@ -27,7 +27,7 @@ const applyTaskSchema = new mongoose.Schema(
       maxLength: 500,
     },
 
-    // proposedAmount: {
+    // expectedPay: {
     //   type: Number,
     //   min: 0,
     // },
@@ -38,26 +38,22 @@ const applyTaskSchema = new mongoose.Schema(
       default: "applied",
     },
 
-    // optional info about selection/work
     selectedAt: Date,
     completedAt: Date,
-
-
-    // hostRatingForAlly: {
-    //   type: Number,
-    //   min: 1,
-    //   max: 5,
-    // },
-    // allyRatingForHost: {
-    //   type: Number,
-    //   min: 1,
-    //   max: 5,
-    // },
+    statusHistory:[
+      {
+        status:String,
+        changedAt:{type:Date,default:Date.now},
+        changedBy:{type:mongoose.Schema.Types.ObjectId,ref:"User"},
+      }
+    ],
+    rejectionReason:String,
+    cancellationReason:String,
   },
   { timestamps: true }
 );
 
-applyTaskSchema.index({ task: 1}, { unique: true });
+applyTaskSchema.index({ task: 1,applicant:1}, { unique: true });
 
 const ApplyTaskModel = mongoose.model("AppliedTask", applyTaskSchema);
 
