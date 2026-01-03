@@ -97,7 +97,7 @@ const getHostTasks=async(req,res)=>{
 const getTask = async (req, res) => {
     try {
         const id = req.params.id;
-        const task = await PostTaskModel.findById(id);
+        const task = await PostTaskModel.findById(id).populate("createdBy", "firstName lastName rating");
         if (!task)
             return res.status(404).json({ message: "Task not found" });
         return res.status(200).json({
