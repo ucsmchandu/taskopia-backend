@@ -27,7 +27,7 @@ const { applyTask,
 applyTaskRouter.post('/:taskId/apply', checkAuth, applyTask);
 applyTaskRouter.get('/:taskId/applicants', checkAuth, getApplication)
 applyTaskRouter.get('/applications/me', checkAuth, getMyApplications)
-applyTaskRouter.get('/application/details/me',checkAuth,getMyApplicationsDetails);
+applyTaskRouter.get('/application/details/me/:taskId',checkAuth,getMyApplicationsDetails);
 applyTaskRouter.get('/application/:applicationId', checkAuth, getSingleApplication)
 applyTaskRouter.patch('/application/:id/status', checkAuth, updateApplicationStatus);
 applyTaskRouter.patch('/application/:id/cancel', checkAuth, cancelApplication)

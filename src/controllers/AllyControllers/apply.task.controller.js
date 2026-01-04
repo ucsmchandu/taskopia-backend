@@ -138,14 +138,18 @@ const getMyApplications = async (req, res) => {
 const getMyApplicationsDetails = async (req, res) => {
     try {
         const { uid } = req.firebaseUser;
-
+        const taskId=req.params.taskId;
         const getProfile = await AllyProfileModel.findOne({ firebaseUid: uid })
         if (!getProfile)
             return res.status(404).json({ message: "Ally not found" })
 
-        const appliedTasks = await ApplyTaskModel.find({ applicant: getProfile._id }).populate("task").populate("host","firstName lastName addressDetails")
-        if (appliedTasks.length === 0)
-            return res.status(404).json({ message: "No applied tasks were found" })
+        const appliedTasks=await PostTaskModel.findById(taskId).populate("task").populate("host","firstName lastName addressDetails");
+        if(!appliedTasks)
+            return res.status(404).json({message:"Task Not Found"});
+
+        // const appliedTasks = await ApplyTaskModel.find({ applicant: getProfile._id }).populate("task").populate("host","firstName lastName addressDetails")
+        // if (appliedTasks.length === 0)
+        //     return res.status(404).json({ message: "No applied tasks were found" })
 
         return res.status(200).json({
             message: "Applied tasks found",
