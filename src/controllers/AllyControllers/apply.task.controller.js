@@ -143,7 +143,7 @@ const getMyApplicationsDetails = async (req, res) => {
         if (!getProfile)
             return res.status(404).json({ message: "Ally not found" })
 
-        const appliedTasks=await PostTaskModel.findById(taskId).populate("task").populate("host","firstName lastName addressDetails");
+        const appliedTasks=await ApplyTaskModel.findById(taskId).populate("task").populate("host","firstName lastName addressDetails");
         if(!appliedTasks)
             return res.status(404).json({message:"Task Not Found"});
 
