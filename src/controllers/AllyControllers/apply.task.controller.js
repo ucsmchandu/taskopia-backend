@@ -14,7 +14,7 @@ const AllyProfileModel = require("../../models/AllyModels/AllyProfileModel")
 const HostProfileModel = require("../../models/HostModels/HostProfileModel")
 const User=require("../../models/User")
 const mongoose = require('mongoose')
-const { application } = require('express')
+
 // for ally
 const applyTask = async (req, res) => {
     try {
@@ -110,8 +110,32 @@ const getApplication = async (req, res) => {
     }
 }
 
-// this is for ally to see their applied task
+// this is for ally to see their applied task (only get the tasks)
 const getMyApplications = async (req, res) => {
+    try {
+        const { uid } = req.firebaseUser;
+
+        const getProfile = await AllyProfileModel.findOne({ firebaseUid: uid })
+        if (!getProfile)
+            return res.status(404).json({ message: "Ally not found" })
+
+        const appliedTasks = await ApplyTaskModel.find({ applicant: getProfile._id }).populate("task"," taskTitle budget taskCategory ").populate("host","firstName lastName addressDetails")
+        if (appliedTasks.length === 0)
+            return res.status(404).json({ message: "No applied tasks were found" })
+
+        return res.status(200).json({
+            message: "Applied tasks found",
+            tasks: appliedTasks
+        });
+    } catch (err) {
+        console.log(err)
+        console.log(err.message)
+        res.status(500).json({ message: "Internal Server Error" })
+    }
+}
+
+// this is for ally to get the full details about the applied task
+const getMyApplicationsDetails = async (req, res) => {
     try {
         const { uid } = req.firebaseUser;
 
@@ -570,5 +594,6 @@ module.exports = {
     checkAllyAppliedTask,
     getApplicationsCount,
     markTaskCompleted,
-    cancelTask
+    cancelTask,
+    getMyApplicationsDetails
 }
