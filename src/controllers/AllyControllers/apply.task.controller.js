@@ -119,7 +119,7 @@ const getMyApplications = async (req, res) => {
         if (!getProfile)
             return res.status(404).json({ message: "Ally not found" })
 
-        const appliedTasks = await ApplyTaskModel.find({ applicant: getProfile._id })
+        const appliedTasks = await ApplyTaskModel.find({ applicant: getProfile._id }).populate("task"," taskTitle budget taskCategory ").populate("host","firstName lastName addressDetails")
         if (appliedTasks.length === 0)
             return res.status(404).json({ message: "No applied tasks were found" })
 
@@ -256,7 +256,7 @@ const updateApplicationStatus = async (req, res) => {
     }
 }
 
-// to cancel the application
+// to cancel the application (for ally)
 const cancelApplication = async (req, res) => {
     const session = await mongoose.startSession();
     try {
@@ -350,6 +350,7 @@ const cancelApplication = async (req, res) => {
     }
 }
 
+// for checking that ally applied for the task or not. this also return the applied tasks (for ally)
 const checkAllyAppliedTask = async (req, res) => {
     try {
         const { uid } = req.firebaseUser;
@@ -379,6 +380,7 @@ const checkAllyAppliedTask = async (req, res) => {
     }
 }
 
+// to get the count of application for a particular task (for host)
 const getApplicationsCount = async (req, res) => {
     try {
         const { uid } = req.firebaseUser;
@@ -409,6 +411,7 @@ const getApplicationsCount = async (req, res) => {
     }
 }
 
+// to mark the task completed (for host)
 const markTaskCompleted = async (req, res) => {
     const session = await mongoose.startSession();
     try {
@@ -489,6 +492,7 @@ const markTaskCompleted = async (req, res) => {
     }
 }
 
+// to cancel the task (for host)
 const cancelTask = async (req, res) => {
     const session = await mongoose.startSession()
     try {
