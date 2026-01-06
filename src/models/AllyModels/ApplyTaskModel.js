@@ -1,4 +1,4 @@
-const mongoose=require('mongoose')
+const mongoose = require('mongoose')
 
 const applyTaskSchema = new mongoose.Schema(
   {
@@ -40,20 +40,20 @@ const applyTaskSchema = new mongoose.Schema(
 
     selectedAt: Date,
     completedAt: Date,
-    statusHistory:[
+    statusHistory: [
       {
-        status:String,
-        changedAt:{type:Date,default:Date.now},
-        changedBy:{type:mongoose.Schema.Types.ObjectId,ref:"User"},
+        status: String,
+        changedAt: { type: Date, default: Date.now },
+        changedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
       }
     ],
-    rejectionReason:String,
-    cancellationReason:String,
+    rejectionReason: String,
+    cancellationReason: String,
   },
   { timestamps: true }
 );
 
-applyTaskSchema.index({ task: 1,applicant:1}, { unique: true });
+applyTaskSchema.index({ applicant: 1, task: 1 }, { unique: true });
 
 const ApplyTaskModel = mongoose.model("AppliedTask", applyTaskSchema);
 

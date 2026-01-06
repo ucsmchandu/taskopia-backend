@@ -5,11 +5,11 @@ try{
     cloudinary_url:process.env.CLOUDINARY_URL,
     secure:true
 });
+console.log("cloudinary is connected");
 }catch(err){
     console.log(err);
     console.log(err.message);
 }
 
-console.log("cloudinary is connected");
 
 module.exports=cloudinary;

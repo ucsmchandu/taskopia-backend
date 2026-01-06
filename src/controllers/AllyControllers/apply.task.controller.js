@@ -12,7 +12,7 @@ const PostTaskModel = require('../../models/HostModels/PostTaskModel')
 const ApplyTaskModel = require("../../models/AllyModels/ApplyTaskModel")
 const AllyProfileModel = require("../../models/AllyModels/AllyProfileModel")
 const HostProfileModel = require("../../models/HostModels/HostProfileModel")
-const User=require("../../models/User")
+const User = require("../../models/User")
 const mongoose = require('mongoose')
 
 // for ally
@@ -20,16 +20,20 @@ const applyTask = async (req, res) => {
     try {
         const { uid } = req.firebaseUser;
         const { coverMessage } = req.body;
+        const taskId = req.params.taskId;
 
         const allyProfile = await AllyProfileModel.findOne({ firebaseUid: uid });
         if (!allyProfile)
             return res.status(404).json({ message: "User not Found" });
 
-        const user=await User.findOne({userFirebaseId:uid})
-        if(!user)
-            return res.status(404).json({message:"User not found"});
+        const existing = await ApplyTaskModel.findOne({ applicant: allyProfile._id, task:taskId });
+        if(existing)
+            return res.status(400).json({message:"User already Applied for this task"});
 
-        const taskId = req.params.taskId;
+        const user = await User.findOne({ userFirebaseId: uid })
+        if (!user)
+            return res.status(404).json({ message: "User not found" });
+
         const getTask = await PostTaskModel.findById(taskId);
         if (!getTask)
             return res.status(404).json({ message: "Task not Found" })
@@ -119,7 +123,7 @@ const getMyApplications = async (req, res) => {
         if (!getProfile)
             return res.status(404).json({ message: "Ally not found" })
 
-        const appliedTasks = await ApplyTaskModel.find({ applicant: getProfile._id }).populate("task"," taskTitle budget taskCategory ").populate("host","firstName lastName addressDetails")
+        const appliedTasks = await ApplyTaskModel.find({ applicant: getProfile._id }).populate("task", " taskTitle budget taskCategory ").populate("host", "firstName lastName addressDetails")
         if (appliedTasks.length === 0)
             return res.status(404).json({ message: "No applied tasks were found" })
 
@@ -138,14 +142,14 @@ const getMyApplications = async (req, res) => {
 const getMyApplicationsDetails = async (req, res) => {
     try {
         const { uid } = req.firebaseUser;
-        const taskId=req.params.taskId;
+        const taskId = req.params.taskId;
         const getProfile = await AllyProfileModel.findOne({ firebaseUid: uid })
         if (!getProfile)
             return res.status(404).json({ message: "Ally not found" })
 
-        const appliedTasks=await ApplyTaskModel.findOne({applicant:getProfile._id,task:taskId}).populate("task").populate("host","firstName lastName addressDetails");
-        if(!appliedTasks)
-            return res.status(404).json({message:"Task Not Found"});
+        const appliedTasks = await ApplyTaskModel.findOne({ applicant: getProfile._id, task: taskId }).populate("task").populate("host", "firstName lastName addressDetails");
+        if (!appliedTasks)
+            return res.status(404).json({ message: "Task Not Found" });
 
         // const appliedTasks = await ApplyTaskModel.find({ applicant: getProfile._id }).populate("task").populate("host","firstName lastName addressDetails")
         // if (appliedTasks.length === 0)
