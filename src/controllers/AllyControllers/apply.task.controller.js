@@ -26,9 +26,9 @@ const applyTask = async (req, res) => {
         if (!allyProfile)
             return res.status(404).json({ message: "User not Found" });
 
-        const existing = await ApplyTaskModel.findOne({ applicant: allyProfile._id, task:taskId });
-        if(existing)
-            return res.status(400).json({message:"User already Applied for this task"});
+        const existing = await ApplyTaskModel.findOne({ applicant: allyProfile._id, task: taskId });
+        if (existing)
+            return res.status(400).json({ message: "User already Applied for this task" });
 
         const user = await User.findOne({ userFirebaseId: uid })
         if (!user)
@@ -194,99 +194,119 @@ const getSingleApplication = async (req, res) => {
 // to update the status of the application (for host)
 const updateApplicationStatus = async (req, res) => {
     const session = await mongoose.startSession();
+
     try {
         session.startTransaction();
-        const applicationId = req.params.id;
-        const { uid } = req.firebaseUser
-        const { status } = req.body;
 
-        // return if the body is not valid
+        const { id: applicationId } = req.params;
+        const { status } = req.body;
+        const { uid } = req.firebaseUser;
+
         if (!["accepted", "rejected"].includes(status)) {
             await session.abortTransaction();
             session.endSession();
-            return res.status(400).json({ message: "Invalid status value" })
+            return res.status(400).json({ message: "Invalid status value" });
         }
-        // here has to update the two models
-        // postTaskModel
-        // ApplyTaskModel
 
-        // get the host profile
-        const getHostProfile = await HostProfileModel.findOne({ firebaseUid: uid }).session(session)
-        if (!getHostProfile) {
+        const hostProfile = await HostProfileModel.findOne({
+            firebaseUid: uid,
+        }).session(session);
+
+        if (!hostProfile) {
             await session.abortTransaction();
             session.endSession();
-            return res.status(404).json({ message: "Host profile not Found" })
+            return res.status(404).json({ message: "Host profile not found" });
         }
 
-        // get the application
-        const getApplication = await ApplyTaskModel.findById(applicationId).session(session);
-        if (!getApplication) {
+        const application = await ApplyTaskModel.findById(applicationId).session(
+            session
+        );
+
+        if (!application) {
             await session.abortTransaction();
             session.endSession();
-            return res.status(404).json({ message: "Application not Found" })
+            return res.status(404).json({ message: "Application not found" });
         }
 
-        // checking the host if he is not in application then he is not in task model
-        if (getApplication.host.toString() !== getHostProfile._id.toString()) {
+        if (application.host.toString() !== hostProfile._id.toString()) {
             await session.abortTransaction();
             session.endSession();
-            return res.status(403).json({ message: "Not Authorized" })
+            return res.status(403).json({ message: "Not authorized" });
         }
 
-        // updating the application if it is in applied
-        if (getApplication.status !== "applied") {
+        if (application.status !== "applied") {
             await session.abortTransaction();
             session.endSession();
-            return res.status(400).json({ message: "You can only update the applied applications" })
+            return res
+                .status(400)
+                .json({ message: "Only applied applications can be updated" });
         }
 
-        // get the tasj details
-        const getTask = await PostTaskModel.findById(getApplication.task).session(session)
-        if (!getTask) {
+        const task = await PostTaskModel.findById(application.task).session(
+            session
+        );
+
+        if (!task) {
             await session.abortTransaction();
             session.endSession();
-            return res.status(404).json({ message: "Task not Found" })
+            return res.status(404).json({ message: "Task not found" });
         }
 
-        // action is not done if the task is assigned,compledted,cancelled
-        if (["assigned", "completed", "cancelled"].includes(getTask.status))
-            return res.status(400).json({ message: "Task is no longer accepting decisions" })
+        if (["assigned", "completed", "cancelled"].includes(task.status)) {
+            await session.abortTransaction();
+            session.endSession();
+            return res
+                .status(400)
+                .json({ message: "Task is no longer accepting decisions" });
+        }
 
-        // update the two models
+        //  ACCEPT 
         if (status === "accepted") {
-            getApplication.status = "accepted";
-            getTask.status = "assigned";
-            getTask.assignedAlly = getApplication.applicant;
+            const alreadyAccepted = await ApplyTaskModel.findOne({
+                task: task._id,
+                status: "accepted",
+            }).session(session);
 
-            // reject remaing all applications
+            if (alreadyAccepted) {
+                await session.abortTransaction();
+                session.endSession();
+                return res.status(400).json({ message: "Task already assigned" });
+            }
+
+            application.status = "accepted";
+            task.status = "assigned";
+            task.assignedAlly = application.applicant;
+
             await ApplyTaskModel.updateMany(
-                { task: getTask._id, _id: { $ne: getApplication._id } },
+                { task: task._id, _id: { $ne: application._id } },
                 { $set: { status: "rejected" } },
                 { session }
             );
-            await getTask.save({ session });
+
+            await task.save({ session });
         }
 
+        //  REJECT 
         if (status === "rejected") {
-            getApplication.status = "rejected"
+            application.status = "rejected";
         }
 
-        await getApplication.save({ session });
+        await application.save({ session });
 
         await session.commitTransaction();
         session.endSession();
+
         return res.status(200).json({
-            message: "Application Updated",
-            application: getApplication
-        })
+            message: "Application updated successfully",
+            application,
+        });
     } catch (err) {
         await session.abortTransaction();
         session.endSession();
-        console.log(err)
-        console.log(err.message)
-        res.status(500).json({ message: "Internal Server Error" })
+        console.error(err);
+        return res.status(500).json({ message: "Internal server error" });
     }
-}
+};
 
 // to cancel the application (for ally)
 const cancelApplication = async (req, res) => {
