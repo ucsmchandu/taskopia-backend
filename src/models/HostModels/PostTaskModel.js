@@ -83,8 +83,22 @@ const PostTaskSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true
+    },
+    location: {
+        type: {
+            type: String,
+            enum: ["Point"],
+            default: "Point"
+        },
+        coordinates: {
+            type: [Number],
+            index: "2dsphere"
+        }
     }
 }, { timestamps: true })
+
+PostTaskSchema.index({ location: "2dsphere" });
+
 
 const PostTaskModel = mongoose.model('ActiveTask', PostTaskSchema);
 module.exports = PostTaskModel;

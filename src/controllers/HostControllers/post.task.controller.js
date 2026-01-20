@@ -1,10 +1,10 @@
 const PostTaskModel = require('../../models/HostModels/PostTaskModel');
-const HostProfileModel=require('../../models/HostModels/HostProfileModel')
+const HostProfileModel = require('../../models/HostModels/HostProfileModel')
 const uploadTask = async (req, res) => {
     const { uid, userId } = req.firebaseUser;
-    const findHostProfile=await HostProfileModel.findOne({firebaseUid:uid});
-    if(!findHostProfile)
-        return res.status(404).json({message:"Host profile is not found"});
+    const findHostProfile = await HostProfileModel.findOne({ firebaseUid: uid });
+    if (!findHostProfile)
+        return res.status(404).json({ message: "Host profile is not found" });
     try {
         const {
             email,
@@ -54,7 +54,7 @@ const uploadTask = async (req, res) => {
     }
 }
 
-// for ally
+// to get all tasks including the assigned and completed tasks
 const getAllTasks = async (req, res) => {
     try {
         const getTasks = await PostTaskModel.find({});
@@ -71,26 +71,88 @@ const getAllTasks = async (req, res) => {
     }
 }
 
-// for host
-const getHostTasks=async(req,res)=>{
-    try{
-        const {uid}=req.firebaseUser;
-        const getHost=await HostProfileModel.findOne({firebaseUid:uid});
-        if(!getHost)
-            return res.status(404).json({message:"Host not found"})
+// to get the only active tasks
+const getActiveTasks = async (req, res) => {
+    try {
+        const { sort, lat, lng, distance } = req.query;
 
-        const getTasks=await PostTaskModel.find({createdBy:getHost._id});
-        if(getTasks.length===0)
-            return res.status(404).json({message:"No Tasks Found"});
+        // base condition
+        let filter = {
+            status: "posted",
+            isActive: true,
+            assignedAlly: null
+        };
+
+        let query;
+
+        // get nearby
+        if (lat && lng) {
+            query = PostTaskModel.find({
+                ...filter,
+                location: {
+                    $near: {
+                        $geometry: {
+                            type: "Point",
+                            coordinates: [parseFloat(lng), parseFloat(lat)]
+                        },
+                        $maxDistance: (distance || 5) * 1000
+                    }
+                }
+            })
+        } else {
+            query = PostTaskModel.find(filter);
+        }
+
+        // sorting
+        switch (sort) {
+            case "newest":
+                query = query.sort({ createdAt: -1 });
+                break;
+
+            case "highestPaying":
+                query = query.sort({ budget: -1 });
+                break;
+
+            case "urgent":
+                query = (await query.find({ urgency: "urgent" })).toSorted({createdAt:-1});
+                break;
+
+            default:
+                query = query.sort({ createdAt: -1 });
+        }
+
+        const tasks = await query;
+        if (!tasks.length) {
+            return res.status(404).json({ message: "Tasks Not Found" });
+        }
+        res.status(200).json({ tasks });
+    } catch (err) {
+        console.log(err);
+        console.log(err.message);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}
+
+// for host
+const getHostTasks = async (req, res) => {
+    try {
+        const { uid } = req.firebaseUser;
+        const getHost = await HostProfileModel.findOne({ firebaseUid: uid });
+        if (!getHost)
+            return res.status(404).json({ message: "Host not found" })
+
+        const getTasks = await PostTaskModel.find({ createdBy: getHost._id });
+        if (getTasks.length === 0)
+            return res.status(404).json({ message: "No Tasks Found" });
 
         return res.status(200).json({
-            message:"Tasks found",
-            tasks:getTasks
+            message: "Tasks found",
+            tasks: getTasks
         });
-    }catch(err){
+    } catch (err) {
         console.log(err)
         console.log(err.message)
-        res.status(500).json({message:"Internal Server Error"})
+        res.status(500).json({ message: "Internal Server Error" })
     }
 }
 
@@ -115,14 +177,14 @@ const getTask = async (req, res) => {
 const deleteTask = async (req, res) => {
     try {
         const id = req.params.taskId;
-        const {uid}=req.firebaseUser;
+        const { uid } = req.firebaseUser;
         const task = await PostTaskModel.findById(id);
         if (!task)
             return res.status(404).json({ message: "Event not found" });
 
-        const user=await HostProfileModel.findOne({firebaseUid:uid});
-        if(!user)
-            return res.status(404).json({message:"Host Not Found"})
+        const user = await HostProfileModel.findOne({ firebaseUid: uid });
+        if (!user)
+            return res.status(404).json({ message: "Host Not Found" })
 
         if (task.createdBy.toString() !== user._id.toString())
             return res.status(403).json({ message: "Not Authorized" })
@@ -156,9 +218,9 @@ const editTask = async (req, res) => {
         if (!task)
             return res.status(404).json({ message: "Task not found" });
 
-        const user=await HostProfileModel.findOne({firebaseUid:uid});
-        if(!user)
-            return res.status(404).json({message:"Host Not Found"})
+        const user = await HostProfileModel.findOne({ firebaseUid: uid });
+        if (!user)
+            return res.status(404).json({ message: "Host Not Found" })
 
 
         if (task.createdBy.toString() !== user._id.toString())
@@ -169,12 +231,12 @@ const editTask = async (req, res) => {
         const fields = ["taskTitle", "description", "budget", "address", "email", "urgency", "startingDate", "endingDate", "workingHours", "postRemovingDate"];
 
         fields.forEach((field) => { if (req.body[field] !== undefined) updates[field] = req.body[field]; })
-        
-        if(req.file?.path.length) updates.attachments=req.file?.path;
+
+        if (req.file?.path.length) updates.attachments = req.file?.path;
 
         const editedTask = await PostTaskModel.findByIdAndUpdate(
             taskId,
-            {$set:updates},
+            { $set: updates },
             { new: true }
         )
         res.status(200).json({
@@ -192,4 +254,4 @@ const editTask = async (req, res) => {
 
 
 
-module.exports = { uploadTask, getAllTasks, deleteTask, getTask, editTask,getHostTasks };
+module.exports = { uploadTask, getAllTasks, getActiveTasks, deleteTask, getTask, editTask, getHostTasks };
