@@ -76,8 +76,7 @@ const getActiveTasks = async (req, res) => {
     try {
         const { sort, lat, lng, distance } = req.query;
 
-        // base condition
-        let filter = {
+        const filter = {
             status: "posted",
             isActive: true,
             assignedAlly: null
@@ -85,7 +84,6 @@ const getActiveTasks = async (req, res) => {
 
         let query;
 
-        // get nearby
         if (lat && lng) {
             query = PostTaskModel.find({
                 ...filter,
@@ -98,12 +96,11 @@ const getActiveTasks = async (req, res) => {
                         $maxDistance: (distance || 5) * 1000
                     }
                 }
-            })
+            });
         } else {
             query = PostTaskModel.find(filter);
         }
 
-        // sorting
         switch (sort) {
             case "newest":
                 query = query.sort({ createdAt: -1 });
@@ -114,7 +111,9 @@ const getActiveTasks = async (req, res) => {
                 break;
 
             case "urgent":
-                query = (await query.find({ urgency: "urgent" })).toSorted({createdAt:-1});
+                query = query
+                    .find({ urgency: "urgent" })
+                    .sort({ createdAt: -1 });
                 break;
 
             default:
@@ -122,16 +121,18 @@ const getActiveTasks = async (req, res) => {
         }
 
         const tasks = await query;
+
         if (!tasks.length) {
             return res.status(404).json({ message: "Tasks Not Found" });
         }
+
         res.status(200).json({ tasks });
     } catch (err) {
-        console.log(err);
-        console.log(err.message);
+        console.error(err);
         res.status(500).json({ message: "Internal Server Error" });
     }
-}
+};
+
 
 // for host
 const getHostTasks = async (req, res) => {
