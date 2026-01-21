@@ -11,24 +11,37 @@ const uploadTask = async (req, res) => {
             title,
             taskDescription,
             taskCategory,
-            location,
+            address,
             amount,
             urgencyLevel,
             startingDate,
             endingDate,
             workingHours,
             postRemovingDate,
-            attachments  //url
+            // attachments  //url,
+            lng,
+            lat
         } = req.body;
         // console.log(attachments);
         // console.log("img url :",req.file.path);
+
+        // check if the location coordinates are recived or not
+        if (!lat || !lng)
+            return res.status(400).json({ message: "Location is Required" });
+
+        const geoLocation = lat !== undefined && lng !== undefined && lat !== null && lng !== null ? {
+            type: "Point",
+            coordinates: [parseFloat(lng), parseFloat(lat)]
+        } : null
+
         const newTask = new PostTaskModel({
             firebaseId: uid,
             taskTitle: title,
             description: taskDescription,
             taskCategory: taskCategory,
-            budget: amount,
-            address: location,
+            budget: Number(amount),
+            address,
+            location: geoLocation,
             email: email,
             urgency: urgencyLevel,
             startingDate: startingDate,
@@ -74,7 +87,7 @@ const getAllTasks = async (req, res) => {
 // to get the only active tasks
 const getActiveTasks = async (req, res) => {
     try {
-        const { sort, lat, lng, distance } = req.query;
+        const { sort, lat, lng, distance, search } = req.query;
 
         const filter = {
             status: "posted",
@@ -82,9 +95,20 @@ const getActiveTasks = async (req, res) => {
             assignedAlly: null
         };
 
+        if (search) {
+            filter.$or = [
+                { taskTitle: { $regex: search, $options: "i" } },
+                { description: { $regex: search, $options: "i" } }
+            ];
+        }
+
+        if (sort === "urgent") {
+            filter.urgency = "urgent";
+        }
+
         let query;
 
-        if (lat && lng) {
+        if (lat !== undefined && lng !== undefined) {
             query = PostTaskModel.find({
                 ...filter,
                 location: {
@@ -93,31 +117,17 @@ const getActiveTasks = async (req, res) => {
                             type: "Point",
                             coordinates: [parseFloat(lng), parseFloat(lat)]
                         },
-                        $maxDistance: (distance || 5) * 1000
+                        $maxDistance: (Number(distance) || 5) * 1000
                     }
                 }
             });
         } else {
             query = PostTaskModel.find(filter);
-        }
-
-        switch (sort) {
-            case "newest":
-                query = query.sort({ createdAt: -1 });
-                break;
-
-            case "highestPaying":
+            if (sort === "highestPaying") {
                 query = query.sort({ budget: -1 });
-                break;
-
-            case "urgent":
-                query = query
-                    .find({ urgency: "urgent" })
-                    .sort({ createdAt: -1 });
-                break;
-
-            default:
+            } else {
                 query = query.sort({ createdAt: -1 });
+            }
         }
 
         const tasks = await query;
@@ -132,7 +142,6 @@ const getActiveTasks = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
-
 
 // for host
 const getHostTasks = async (req, res) => {
