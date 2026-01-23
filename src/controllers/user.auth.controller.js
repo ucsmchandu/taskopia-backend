@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken')
 const admin = require('../utils/firebaseAdmin')
 const User = require('../models/User')
 const generateToken = require('../utils/jwtToken');
+const AllyProfileModel = require('../models/AllyModels/AllyProfileModel');
+const HostProfileModel = require('../models/HostModels/HostProfileModel')
 
 const register = async (req, res) => {
     let decoded;
@@ -88,7 +90,7 @@ const logout = async (req, res) => {
     res.clearCookie("jwt", {
         httpOnly: true,
         secure: true,
-        sameSite:"none",
+        sameSite: "none",
     });
     res.status(200).json({
         message: "Logged out successful"
@@ -156,6 +158,43 @@ const autoSignup = async (req, res) => {
     }
 }
 
+// to check that whether the user completes the profile setup or not
+const updateProfile = async (req, res) => {
+    try {
+        const userId = req.firebaseUser.userId;
+        const firebaseUserId = req.firebaseUser.uid;
+        const userType = req.firebaseUser.userType;
+
+        if (userType === "ally") {
+            const getAllyProfile = await AllyProfileModel.findOne({ firebaseUid: firebaseUserId });
+            if (!getAllyProfile)
+                return res.status(400).json({
+                    message: "Profile Not Found. Complete Profile First"
+                })
+        } else {
+            const getHostProfile = await HostProfileModel.findOne({ firebaseUid: firebaseUserId });
+            if (!getHostProfile)
+                return res.status(400).json({
+                    message: "Profile not found. Complete profile first"
+                })
+        }
+
+        const user = await User.findById(userId);
+        if (!user)
+            return res.status(404).json({ message: "User not found" });
+
+        user.isProfileSetupCompleted = true;
+        await user.save();
+
+        res.status(200).json({
+            message: "Profile updated successFully",
+            user
+        })
+    } catch (err) {
+        res.status(500).json({ message: "Something Went Wrong" });
+    }
+}
+
 // checks using the jwt token
 const authMe = async (req, res) => {
     try {
@@ -167,6 +206,7 @@ const authMe = async (req, res) => {
             email: req.firebaseUser.email,
             verified: req.firebaseUser.email_verified,
             userType: user ? user.userType : null,
+            profileSetup:user.isProfileSetupCompleted,
             message: "User Authenticated"
         })
     } catch (err) {
@@ -177,4 +217,4 @@ const authMe = async (req, res) => {
     }
 }
 
-module.exports = { register, login, logout, authMe, autoSignup };
+module.exports = { register, login, logout, authMe, autoSignup, updateProfile };

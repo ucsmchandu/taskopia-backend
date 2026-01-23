@@ -17,6 +17,10 @@ const UserSchema=new mongoose.Schema({
     userType:{
         type:String,
         required:true
+    },
+    isProfileSetupCompleted:{
+        type:Boolean,
+        default:false
     }
 });
 
