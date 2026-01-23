@@ -163,9 +163,13 @@ const updateProfile = async (req, res) => {
     try {
         const userId = req.firebaseUser.userId;
         const firebaseUserId = req.firebaseUser.uid;
-        const userType = req.firebaseUser.userType;
+        // const userType = req.firebaseUser.userType;
 
-        if (userType === "ally") {
+        const user = await User.findById(userId);
+        if (!user)
+            return res.status(404).json({ message: "User not found" });
+
+        if (user.userType === "ally") {
             const getAllyProfile = await AllyProfileModel.findOne({ firebaseUid: firebaseUserId });
             if (!getAllyProfile)
                 return res.status(400).json({
@@ -178,10 +182,6 @@ const updateProfile = async (req, res) => {
                     message: "Profile not found. Complete profile first"
                 })
         }
-
-        const user = await User.findById(userId);
-        if (!user)
-            return res.status(404).json({ message: "User not found" });
 
         user.isProfileSetupCompleted = true;
         await user.save();
