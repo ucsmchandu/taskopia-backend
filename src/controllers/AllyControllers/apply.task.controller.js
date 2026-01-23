@@ -97,7 +97,7 @@ const getApplication = async (req, res) => {
         if (getTask.createdBy.toString() !== getHost._id.toString())
             return res.status(403).json({ message: "Not Authorized" });
 
-        const applications = await ApplyTaskModel.find({ task: taskId }).populate("applicant", "firstName lastName rating");
+        const applications = await ApplyTaskModel.find({ task: taskId }).populate("applicant", "firstName lastName rating firebaseUid");
 
         if (applications.length === 0)
             return res.status(404).json({ message: "No Applications are Found on This Task" })
