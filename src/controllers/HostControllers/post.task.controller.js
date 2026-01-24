@@ -190,21 +190,26 @@ const deleteTask = async (req, res) => {
         const { uid } = req.firebaseUser;
         const task = await PostTaskModel.findById(id);
         if (!task)
-            return res.status(404).json({ message: "Event not found" });
+            return res.status(404).json({ message: "Task not found" });
 
-        const user = await HostProfileModel.findOne({ firebaseUid: uid });
-        if (!user)
+        if(task.isDeleted)
+            return res.status(400).json({message:"Task already deleted"})
+
+        if(task.status!=="posted")
+            return res.status(400).json({message:"Only posted tasks can be deleted"})
+
+        const host = await HostProfileModel.findOne({ firebaseUid: uid });
+        if (!host)
             return res.status(404).json({ message: "Host Not Found" })
 
-        if (task.createdBy.toString() !== user._id.toString())
+        if (task.createdBy.toString() !== host._id.toString())
             return res.status(403).json({ message: "Not Authorized" })
-        const deletedTask = await PostTaskModel.findByIdAndDelete(id);
-        if (!deletedTask) {
-            return res.status(400).json({ message: "Error occur while task is deleting" })
-        }
+
+        task.isDeleted=true;
+        await task.save();
         return res.status(200).json({
             message: "Task Deleted",
-            deletedTask
+            task
         });
     } catch (err) {
         console.log(err)

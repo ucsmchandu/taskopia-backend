@@ -9,7 +9,7 @@ taskRouter.get('/get/all/tasks', getAllTasks);
 taskRouter.get('/get/all/active/tasks',checkAuth,getActiveTasks)
 taskRouter.get('/get/host/tasks',checkAuth,getHostTasks);
 taskRouter.get('/get/task/:id', getTask)
-taskRouter.delete("/delete/task/:taskId", checkAuth,deleteTask)
+taskRouter.patch("/delete/task/:taskId", checkAuth,deleteTask)
 taskRouter.patch("/edit/task/:id",checkAuth,upload.single("attachments"),editTask);
 
 module.exports = taskRouter;
