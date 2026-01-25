@@ -72,7 +72,7 @@ const login = async (req, res) => {
         const getUser = await User.findOne({ userFirebaseId: uid });
         if (!getUser) return res.status(400).json({ message: "Invalid Credentials" });
 
-        generateToken({ decoded }, getUser._id, res); // fcn to generate and send the jwt token
+        generateToken({ decoded }, getUser._id, getUser.userType, res); // fcn to generate and send the jwt token
 
         res.status(200).json({
             id: getUser._id,
@@ -128,7 +128,7 @@ const autoSignup = async (req, res) => {
                 userType
             })
 
-            generateToken({ decoded }, newUser._id, res);
+            generateToken({ decoded }, newUser._id, newUser.userType, res);
 
             await newUser.save();
             return res.status(201).json({
@@ -140,7 +140,7 @@ const autoSignup = async (req, res) => {
         } else {
             if (getUser.userType.toString() !== userType)
                 return res.status(400).json({ message: "User not Found. Clearly check the user type" });
-            generateToken({ decoded }, getUser._id, res);
+            generateToken({ decoded }, getUser._id, getUser.userType, res);
             // if user already exists then we just return the data from the db
             return res.status(200).json({
                 id: getUser._id,
