@@ -23,6 +23,8 @@ const NotificationSchema = new mongoose.Schema({
             "ALLY_APPLICATION_REJECTED",
             "ALLY_TASK_COMPLETED",
             "ALLY_PROFILE_UPDATED",
+            "ALLY_APPLICATION_ACCEPTED",
+
 
             // HOST
             "HOST_TASK_POSTED",
@@ -30,7 +32,10 @@ const NotificationSchema = new mongoose.Schema({
             "HOST_TASK_UPDATED",
             "HOST_PROFILE_UPDATED",
             "HOST_TASK_DELETED",
-            "HOST_APPLICATION_ACCEPTED"
+            "HOST_TASK_COMPLETED",
+            "HOST_APPLICATION_ACCEPTED",
+            "HOST_APPLICATION_CANCELLED"
+
         ],
         required: true
     },

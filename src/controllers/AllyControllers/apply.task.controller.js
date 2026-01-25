@@ -12,6 +12,7 @@ const PostTaskModel = require('../../models/HostModels/PostTaskModel')
 const ApplyTaskModel = require("../../models/AllyModels/ApplyTaskModel")
 const AllyProfileModel = require("../../models/AllyModels/AllyProfileModel")
 const HostProfileModel = require("../../models/HostModels/HostProfileModel")
+const createNotification = require('../../utils/createnotification')
 const User = require("../../models/User")
 const mongoose = require('mongoose')
 
@@ -59,6 +60,35 @@ const applyTask = async (req, res) => {
         });
 
         await newApplication.save();
+
+        // send notification to ally
+        await createNotification({
+            userId: allyProfile._id,
+            userModel: "AllyProfile",
+            type: "ALLY_TASK_APPLIED",
+            title: "Application Submitted.",
+            message: "You have successfully applied for this task.",
+            link: `/view/applied/task/details/${getTask._id}`,
+            meta: {
+                taskId: getTask._id,
+                hostId:getTask.createdBy,
+                applicationId: newApplication._id
+            }
+        });
+
+        // send notification for host
+        await createNotification({
+            userId: getTask.createdBy,
+            userModel: "HostProfile",
+            type: "HOST_NEW_APPLICANT",
+            title: "New Applicant.",
+            message: "An ally has applied for your task.",
+            link: `/task/${getTask._id}/applications`,
+            meta: {
+                taskId: getTask._id,
+                allyId: allyProfile._id
+            }
+        });
 
         // this is atomic
         await PostTaskModel.findByIdAndUpdate(
@@ -202,12 +232,14 @@ const updateApplicationStatus = async (req, res) => {
         const { status } = req.body;
         const { uid } = req.firebaseUser;
 
+        // checking
         if (!["accepted", "rejected"].includes(status)) {
             await session.abortTransaction();
             session.endSession();
             return res.status(400).json({ message: "Invalid status value" });
         }
 
+        // get the host
         const hostProfile = await HostProfileModel.findOne({
             firebaseUid: uid,
         }).session(session);
@@ -218,6 +250,7 @@ const updateApplicationStatus = async (req, res) => {
             return res.status(404).json({ message: "Host profile not found" });
         }
 
+        // get the application
         const application = await ApplyTaskModel.findById(applicationId).session(
             session
         );
@@ -228,12 +261,14 @@ const updateApplicationStatus = async (req, res) => {
             return res.status(404).json({ message: "Application not found" });
         }
 
+        // checking the auth
         if (application.host.toString() !== hostProfile._id.toString()) {
             await session.abortTransaction();
             session.endSession();
             return res.status(403).json({ message: "Not authorized" });
         }
 
+        // checking if applied or not
         if (application.status !== "applied") {
             await session.abortTransaction();
             session.endSession();
@@ -242,6 +277,7 @@ const updateApplicationStatus = async (req, res) => {
                 .json({ message: "Only applied applications can be updated" });
         }
 
+        // get the task
         const task = await PostTaskModel.findById(application.task).session(
             session
         );
@@ -252,6 +288,7 @@ const updateApplicationStatus = async (req, res) => {
             return res.status(404).json({ message: "Task not found" });
         }
 
+        // checking the task status
         if (["assigned", "completed", "cancelled"].includes(task.status)) {
             await session.abortTransaction();
             session.endSession();
@@ -284,11 +321,53 @@ const updateApplicationStatus = async (req, res) => {
             );
 
             await task.save({ session });
+
+            // send the accept notification for ally 
+            await createNotification({
+                userId: task.assignedAlly,
+                userModel: "AllyProfile",
+                type: "ALLY_APPLICATION_ACCEPTED",
+                title: "Application Accepted.",
+                message: "Your application was accepted",
+                link: "",  // TODO: add view application link here from frontend,
+                meta: {
+                    taskId: task._id,
+                    applicationId: application._id,
+                    hostId: hostProfile._id
+                }
+            })
+
+            // send the application accpted notification for host
+            await createNotification({
+                userId: hostProfile._id,
+                userModel: "HostProfile",
+                type: "HOST_APPLICATION_ACCEPTED",
+                title: "Ally Accepted.",
+                message: "You accepted an ally for this task.",
+                link: "", // TODO: add contact ally (chat link here) from frontend
+                meta: {
+                    allyId: task.assignedAlly,
+                    taskId: task._id,
+                }
+            })
         }
 
         //  REJECT 
         if (status === "rejected") {
             application.status = "rejected";
+
+            // send the rejection notification to the ally
+            await createNotification({
+                userId: application.applicant,
+                userModel: "AllyProfile",
+                type: "ALLY_APPLICATION_REJECTED",
+                title: "Application Rejected.",
+                message: "The host rejected your application.",
+                link: "",  //TODO : add (apply tasks link from frontend here)
+                meta: {
+                    taskId: task._id,
+                }
+            })
         }
 
         await application.save({ session });
@@ -381,6 +460,35 @@ const cancelApplication = async (req, res) => {
                 { $inc: { applicationsCount: -1 } },
                 { session }
             );
+
+            // send the notification for ally
+            await createNotification({
+                userId: getAllyProfile._id,
+                userModel: "AllyProfile",
+                type: "ALLY_TASK_CANCELLED",
+                title: "Task Cancelled.",
+                message: "You have cancelled your application for this task.",
+                link: "",  // TODO: add apply for task link here
+                meta: {
+                    taskId: getTask._id,
+                    hostId: getTask.createdBy,
+                    applicationId: getAppliedTask._id
+                }
+            })
+
+            // send the notification for host
+            await createNotification({
+                userId: getTask.createdBy,
+                userModel: "HostProfile",
+                type: "HOST_APPLICATION_CANCELLED",
+                title: "Application Withdrawn.",
+                message: "An ally has cancelled their application",
+                link: "", // add view applications page link
+                meta: {
+                    taskId: getTask._id,
+                    allyId: getAllyProfile._id
+                }
+            })
         }
 
         await getAppliedTask.save({ session });
@@ -503,26 +611,60 @@ const markTaskCompleted = async (req, res) => {
             return res.status(404).json({ message: "Application not found" })
         }
 
+        // checking the status 
         if (["completed", "cancelled"].includes(getTask.status)) {
             await session.abortTransaction();
             session.endSession();
             return res.status(400).json({ message: `Task is already ${getTask.status}` })
         }
 
+        // checking the status
         if (["rejected", "cancelled", "completed"].includes(getApplication.status)) {
             await session.abortTransaction();
             session.endSession();
             return res.status(400).json({ message: `Application already ${getApplication.status}` });
         }
 
+        // if accepted or assigned then its not done
         if (!(getApplication.status === "accepted" && getTask.status === "assigned")) {
             await session.abortTransaction();
             session.endSession();
             return res.status(400).json({ message: "Task cannot be completed yet. it must be assigned and the application must be accepted" })
         }
 
+        // mark then as completed
         getApplication.status = "completed"
         getTask.status = "completed"
+
+        // send notification to ally
+        await createNotification({
+            userId: getTask.assignedAlly,
+            userModel: "AllyProfile",
+            type: "ALLY_TASK_COMPLETED",
+            title: "Task Completed.",
+            message: "The host marked this task as completed",
+            link: "", // TODO add dashboard link here
+            meta: {
+                taskId: getTask._id,
+                hostId: getUser._id,
+                applicationId: getApplication._id
+            }
+        })
+
+        // send notification to host
+        await createNotification({
+            userId: getUser._id,
+            userModel: "HostProfile",
+            type: "HOST_TASK_COMPLETED",
+            title: "Task Completed.",
+            message: "You marked this task as completed",
+            link: "", // TODO: add the dashboard link here
+            meta: {
+                taskId: getTask._id,
+                allyId: getTask.assignedAlly,
+            }
+        })
+
 
         await getApplication.save({ session });
         await getTask.save({ session });
@@ -544,7 +686,7 @@ const markTaskCompleted = async (req, res) => {
     }
 }
 
-// to cancel the task (for host)
+// to cancel the task (for host)  TODO: add the notification if need 
 const cancelTask = async (req, res) => {
     const session = await mongoose.startSession()
     try {
