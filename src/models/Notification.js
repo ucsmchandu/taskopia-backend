@@ -14,11 +14,23 @@ const NotificationSchema = new mongoose.Schema({
     type: {
         type: String,
         enum: [
-            "TASK_APPLIED",
-            "TASK_ACCEPTED",
-            "TASK_REJECTED",
+            // BOTH
             "TASK_COMPLETED",
-            "NEW_MESSAGE"
+
+            // ALLY
+            "ALLY_TASK_APPLIED",
+            "ALLY_TASK_CANCELLED",
+            "ALLY_APPLICATION_REJECTED",
+            "ALLY_TASK_COMPLETED",
+            "ALLY_PROFILE_UPDATED",
+
+            // HOST
+            "HOST_TASK_POSTED",
+            "HOST_NEW_APPLICANT",
+            "HOST_TASK_UPDATED",
+            "HOST_PROFILE_UPDATED",
+            "HOST_TASK_DELETED",
+            "HOST_APPLICATION_ACCEPTED"
         ],
         required: true
     },
@@ -36,6 +48,10 @@ const NotificationSchema = new mongoose.Schema({
     isRead: {
         type: Boolean,
         default: false
+    },
+    meta: {
+        type: Object,
+        default: {}
     }
 }, { timestamps: true });
 

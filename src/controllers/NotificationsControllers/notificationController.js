@@ -5,8 +5,8 @@ const HostProfileModel = require('../../models/HostModels/HostProfileModel')
 // to get the notifiactions
 const getNotifications = async (req, res) => {
     const { uid, userType } = req.firebaseUser;
-    console.log(uid)
-    console.log(userType)
+    // console.log(uid)
+    // console.log(userType)
     let user;
 
     try {
