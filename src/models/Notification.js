@@ -20,10 +20,12 @@ const NotificationSchema = new mongoose.Schema({
             // ALLY
             "ALLY_TASK_APPLIED",
             "ALLY_TASK_CANCELLED",
+            "ALLY_TASK_DELETED",
             "ALLY_APPLICATION_REJECTED",
             "ALLY_TASK_COMPLETED",
             "ALLY_PROFILE_UPDATED",
             "ALLY_APPLICATION_ACCEPTED",
+            "ALLY_TASK_UPDATED",
 
 
             // HOST

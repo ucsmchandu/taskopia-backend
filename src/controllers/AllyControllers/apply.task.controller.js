@@ -314,11 +314,35 @@ const updateApplicationStatus = async (req, res) => {
             task.status = "assigned";
             task.assignedAlly = application.applicant;
 
+            // Get all other applications to notify them
+            const otherApplications = await ApplyTaskModel.find(
+                { task: task._id, _id: { $ne: application._id }, status: "applied" },
+                null,
+                { session }
+            );
+
             await ApplyTaskModel.updateMany(
                 { task: task._id, _id: { $ne: application._id } },
                 { $set: { status: "rejected" } },
                 { session }
             );
+
+            // Send rejection notifications to other applicants
+            for (const otherApp of otherApplications) {
+                await createNotification({
+                    userId: otherApp.applicant,
+                    userModel: "AllyProfile",
+                    type: "ALLY_APPLICATION_REJECTED",
+                    title: "Application Rejected.",
+                    message: "The host rejected your application.",
+                    link: "",
+                    meta: {
+                        taskId: task._id,
+                        applicationId: otherApp._id,
+                        hostId: hostProfile._id
+                    }
+                });
+            }
 
             await task.save({ session });
 

@@ -1,5 +1,8 @@
 const PostTaskModel = require('../../models/HostModels/PostTaskModel');
 const HostProfileModel = require('../../models/HostModels/HostProfileModel')
+const ApplyTaskModel = require('../../models/AllyModels/ApplyTaskModel');
+const createNotification = require('../../utils/createnotification');
+
 const uploadTask = async (req, res) => {
     const { uid, userId } = req.firebaseUser;
     const findHostProfile = await HostProfileModel.findOne({ firebaseUid: uid });
@@ -52,6 +55,20 @@ const uploadTask = async (req, res) => {
             createdBy: findHostProfile._id
         });
         await newTask.save();
+
+        // send the notification for the host
+        await createNotification({
+            userId: findHostProfile._id,
+            userModel: "HostProfile",
+            type: "HOST_TASK_POSTED",
+            title: "Task Posted Successfully.",
+            message: "Your task has been posted and is now visible to allies.",
+            link: "", //todo: add dashboard link here
+            meta: {
+                taskId: newTask._id
+            }
+        })
+
         return res.status(200).json({
             message: "Task Uploaded successful",
             taskId: newTask._id,
@@ -184,6 +201,7 @@ const getTask = async (req, res) => {
     }
 }
 
+// for host
 const deleteTask = async (req, res) => {
     try {
         const id = req.params.taskId;
@@ -192,11 +210,11 @@ const deleteTask = async (req, res) => {
         if (!task)
             return res.status(404).json({ message: "Task not found" });
 
-        if(task.isDeleted)
-            return res.status(400).json({message:"Task already deleted"})
+        if (task.isDeleted)
+            return res.status(400).json({ message: "Task already deleted" })
 
-        if(task.status!=="posted")
-            return res.status(400).json({message:"Only posted tasks can be deleted"})
+        if (task.status !== "posted")
+            return res.status(400).json({ message: "Only posted tasks can be deleted" })
 
         const host = await HostProfileModel.findOne({ firebaseUid: uid });
         if (!host)
@@ -205,8 +223,42 @@ const deleteTask = async (req, res) => {
         if (task.createdBy.toString() !== host._id.toString())
             return res.status(403).json({ message: "Not Authorized" })
 
-        task.isDeleted=true;
+        task.isDeleted = true;
         await task.save();
+
+        // Get all applicants for this task to notify them
+        const applicants = await ApplyTaskModel.find({ task: id });
+
+        // send notification for host
+        await createNotification({
+            userId: host._id,
+            userModel: "HostProfile",
+            type: "HOST_TASK_DELETED",
+            title: "Task Deleted.",
+            message: "Your task has been deleted successfully.",
+            link: "", //todo: add dashboard link here
+            meta: {
+                taskId: task._id
+            }
+        })
+
+        // Send notifications to all applicants
+        for (const application of applicants) {
+            await createNotification({
+                userId: application.applicant,
+                userModel: "AllyProfile",
+                type: "ALLY_TASK_DELETED",
+                title: "Task Deleted.",
+                message: "A task you applied for has been deleted by the host.",
+                link: "", //todo: add view task details page by task id
+                meta: {
+                    taskId: task._id,
+                    hostId: host._id,
+                    applicationId: application._id
+                }
+            });
+        }
+
         return res.status(200).json({
             message: "Task Deleted",
             task
@@ -220,6 +272,7 @@ const deleteTask = async (req, res) => {
     }
 }
 
+// for host
 const editTask = async (req, res) => {
     try {
         const uid = req.firebaseUser.uid;
@@ -254,6 +307,41 @@ const editTask = async (req, res) => {
             { $set: updates },
             { new: true }
         )
+
+        // Get all applicants for this task to notify them
+        const applicants = await ApplyTaskModel.find({ task: taskId });
+
+        // send notification for host
+        await createNotification({
+            userId: user._id,
+            userModel: "HostProfile",
+            type: "HOST_TASK_UPDATED",
+            title: "Task Updated.",
+            message: "Your task details have been updated successfully.",
+            link: "", // add view task details link here with task id
+            meta: {
+                taskId: editedTask._id
+            }
+        })
+
+        // Send notifications to all applicants
+        for (const application of applicants) {
+            await createNotification({
+                userId: application.applicant,
+                userModel: "AllyProfile",
+                type: "ALLY_TASK_UPDATED", // Using ALLY_TASK_APPLIED to indicate task was updated
+                title: "Task Updated.",
+                message: "A task you applied for has been updated by the host.",
+                link: `/view/applied/task/details/${editedTask._id}`, //Todo :add view task details page link
+                meta: {
+                    taskId: editedTask._id,
+                    hostId: user._id,
+                    applicationId: application._id
+                }
+            });
+        }
+
+
         res.status(200).json({
             message: "Task Updated Successfully",
             updatedTask: editedTask
