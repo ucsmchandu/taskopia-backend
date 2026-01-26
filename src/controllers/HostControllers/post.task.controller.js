@@ -250,7 +250,7 @@ const deleteTask = async (req, res) => {
                 type: "ALLY_TASK_DELETED",
                 title: "Task Deleted.",
                 message: "A task you applied for has been deleted by the host.",
-                link: `/view/applied/task/details/${task._id}`, 
+                link: "/applied-tasks",
                 meta: {
                     taskId: task._id,
                     hostId: host._id,

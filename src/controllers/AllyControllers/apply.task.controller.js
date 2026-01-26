@@ -509,7 +509,7 @@ const cancelApplication = async (req, res) => {
                 type: "HOST_APPLICATION_CANCELLED",
                 title: "Application Withdrawn.",
                 message: "An ally has cancelled their application",
-                link: `/applied_tasks`,
+                link: `/task/${getTask._id}/applications`,
                 meta: {
                     taskId: getTask._id,
                     allyId: getAllyProfile._id
