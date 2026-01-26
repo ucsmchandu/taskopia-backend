@@ -63,7 +63,7 @@ const uploadTask = async (req, res) => {
             type: "HOST_TASK_POSTED",
             title: "Task Posted Successfully.",
             message: "Your task has been posted and is now visible to allies.",
-            link: "", //todo: add dashboard link here
+            link: "/host/dashboard", 
             meta: {
                 taskId: newTask._id
             }
@@ -236,7 +236,7 @@ const deleteTask = async (req, res) => {
             type: "HOST_TASK_DELETED",
             title: "Task Deleted.",
             message: "Your task has been deleted successfully.",
-            link: "", //todo: add dashboard link here
+            link: "/host/dashboard", 
             meta: {
                 taskId: task._id
             }
@@ -250,7 +250,7 @@ const deleteTask = async (req, res) => {
                 type: "ALLY_TASK_DELETED",
                 title: "Task Deleted.",
                 message: "A task you applied for has been deleted by the host.",
-                link: "", //todo: add view task details page by task id
+                link: `/view/applied/task/details/${task._id}`, 
                 meta: {
                     taskId: task._id,
                     hostId: host._id,
@@ -318,7 +318,7 @@ const editTask = async (req, res) => {
             type: "HOST_TASK_UPDATED",
             title: "Task Updated.",
             message: "Your task details have been updated successfully.",
-            link: "", // add view task details link here with task id
+            link: `/task/details/${editedTask._id}`, // add view task details link here with task id
             meta: {
                 taskId: editedTask._id
             }
@@ -332,7 +332,7 @@ const editTask = async (req, res) => {
                 type: "ALLY_TASK_UPDATED", // Using ALLY_TASK_APPLIED to indicate task was updated
                 title: "Task Updated.",
                 message: "A task you applied for has been updated by the host.",
-                link: `/view/applied/task/details/${editedTask._id}`, //Todo :add view task details page link
+                link: `/view/applied/task/details/${editedTask._id}`, 
                 meta: {
                     taskId: editedTask._id,
                     hostId: user._id,

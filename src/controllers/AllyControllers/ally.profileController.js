@@ -47,7 +47,7 @@ const uploadProfile = async (req, res) => {
             type: "ALLY_PROFILE_CREATED",
             title: "Profile Created.",
             message: "Your ally profile has been created successfully.",
-            link: "", // todo: add view profile link here
+            link: "/profile/ally",
             meta: {
                 profileId: newAllyProfile._id
             }
@@ -79,7 +79,6 @@ const getProfile = async (req, res) => {
     }
 }
 
-// Todo: correct the controller at line 88
 const editProfile = async (req, res) => {
     try {
         const { uid } = req.firebaseUser;
@@ -124,7 +123,7 @@ const editProfile = async (req, res) => {
             type: "ALLY_PROFILE_UPDATED",
             title: "Profile Updated.",
             message: "Your ally profile has been updated successfully.",
-            link: "", //todo: add view profile here
+            link: "/profile/ally", 
             meta: {
                 profileId: updatedProfile._id
             }

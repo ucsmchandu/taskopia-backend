@@ -51,7 +51,7 @@ const uploadProfile = async (req, res) => {
             type: "HOST_PROFILE_CREATED",
             title: "Profile Created.",
             message: "Your host profile has been created successfully.",
-            link: "",  // TODO: add view profile link here
+            link: "/profile/host", 
             meta: {
                 profileId: newHostProfile._id
             }
@@ -149,7 +149,7 @@ const editProfile = async (req, res) => {
             type: "HOST_PROFILE_UPDATED",
             title: "Profile Updated.",
             message: "Your host profile has been updated successfully.",
-            link: "", // TODO: add view profile link here
+            link: "/profile/host", 
             meta: {
                 profileId: updatedProfile._id
             }

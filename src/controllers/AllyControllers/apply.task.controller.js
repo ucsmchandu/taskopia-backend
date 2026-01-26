@@ -335,7 +335,7 @@ const updateApplicationStatus = async (req, res) => {
                     type: "ALLY_APPLICATION_REJECTED",
                     title: "Application Rejected.",
                     message: "The host rejected your application.",
-                    link: "",
+                    link: `/view/applied/task/details/${task._id}`,
                     meta: {
                         taskId: task._id,
                         applicationId: otherApp._id,
@@ -353,7 +353,7 @@ const updateApplicationStatus = async (req, res) => {
                 type: "ALLY_APPLICATION_ACCEPTED",
                 title: "Application Accepted.",
                 message: "Your application was accepted",
-                link: "",  // TODO: add view application link here from frontend,
+                link: `/task/${task._id}/applications`,
                 meta: {
                     taskId: task._id,
                     applicationId: application._id,
@@ -368,7 +368,7 @@ const updateApplicationStatus = async (req, res) => {
                 type: "HOST_APPLICATION_ACCEPTED",
                 title: "Ally Accepted.",
                 message: "You accepted an ally for this task.",
-                link: "", // TODO: add contact ally (chat link here) from frontend
+                link: `/chat/${task._id}/${hostProfile._id}`,
                 meta: {
                     allyId: task.assignedAlly,
                     taskId: task._id,
@@ -387,9 +387,11 @@ const updateApplicationStatus = async (req, res) => {
                 type: "ALLY_APPLICATION_REJECTED",
                 title: "Application Rejected.",
                 message: "The host rejected your application.",
-                link: "",  //TODO : add (apply tasks link from frontend here)
+                link: `/view/applied/task/details/${task._id}`,
                 meta: {
                     taskId: task._id,
+                    applicationId: application._id,
+                    hostId: hostProfile._id
                 }
             })
         }
@@ -492,7 +494,7 @@ const cancelApplication = async (req, res) => {
                 type: "ALLY_TASK_CANCELLED",
                 title: "Task Cancelled.",
                 message: "You have cancelled your application for this task.",
-                link: "",  // TODO: add apply for task link here
+                link: "/job/listings", 
                 meta: {
                     taskId: getTask._id,
                     hostId: getTask.createdBy,
@@ -507,7 +509,7 @@ const cancelApplication = async (req, res) => {
                 type: "HOST_APPLICATION_CANCELLED",
                 title: "Application Withdrawn.",
                 message: "An ally has cancelled their application",
-                link: "", // add view applications page link
+                link: `/applied_tasks`,
                 meta: {
                     taskId: getTask._id,
                     allyId: getAllyProfile._id
@@ -667,7 +669,7 @@ const markTaskCompleted = async (req, res) => {
             type: "ALLY_TASK_COMPLETED",
             title: "Task Completed.",
             message: "The host marked this task as completed",
-            link: "", // TODO add dashboard link here
+            link: "/ally/dashboard", 
             meta: {
                 taskId: getTask._id,
                 hostId: getUser._id,
@@ -682,7 +684,7 @@ const markTaskCompleted = async (req, res) => {
             type: "HOST_TASK_COMPLETED",
             title: "Task Completed.",
             message: "You marked this task as completed",
-            link: "", // TODO: add the dashboard link here
+            link: "/host/dashboard",
             meta: {
                 taskId: getTask._id,
                 allyId: getTask.assignedAlly,

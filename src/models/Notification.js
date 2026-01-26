@@ -26,6 +26,8 @@ const NotificationSchema = new mongoose.Schema({
             "ALLY_PROFILE_UPDATED",
             "ALLY_APPLICATION_ACCEPTED",
             "ALLY_TASK_UPDATED",
+            "ALLY_PROFILE_CREATED",
+
 
 
             // HOST
@@ -33,6 +35,7 @@ const NotificationSchema = new mongoose.Schema({
             "HOST_NEW_APPLICANT",
             "HOST_TASK_UPDATED",
             "HOST_PROFILE_UPDATED",
+            "HOST_PROFILE_CREATED",
             "HOST_TASK_DELETED",
             "HOST_TASK_COMPLETED",
             "HOST_APPLICATION_ACCEPTED",
