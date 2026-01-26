@@ -1,4 +1,5 @@
 const AllyProfileModel = require('../../models/AllyModels/AllyProfileModel')
+const createNotification = require('../../utils/createnotification');
 
 const uploadProfile = async (req, res) => {
     try {
@@ -38,6 +39,19 @@ const uploadProfile = async (req, res) => {
         })
 
         await newAllyProfile.save();
+
+        // send notification for ally
+        await createNotification({
+            userId: newAllyProfile._id,
+            userModel: "AllyProfile",
+            type: "ALLY_PROFILE_CREATED",
+            title: "Profile Created.",
+            message: "Your ally profile has been created successfully.",
+            link: "", // todo: add view profile link here
+            meta: {
+                profileId: newAllyProfile._id
+            }
+        })
         return res.status(200).json({
             message: "Ally profile is saved successfully",
             profileId: newAllyProfile._id,
@@ -102,6 +116,19 @@ const editProfile = async (req, res) => {
             { $set: updates },
             { new: true }
         );
+
+        // send notification for the ally
+        await createNotification({
+            userId: updatedProfile._id,
+            userModel: "AllyProfile",
+            type: "ALLY_PROFILE_UPDATED",
+            title: "Profile Updated.",
+            message: "Your ally profile has been updated successfully.",
+            link: "", //todo: add view profile here
+            meta: {
+                profileId: updatedProfile._id
+            }
+        })
         return res.status(200).json({
             message: "Ally profile updated",
             updatedProfile: updatedProfile
@@ -115,18 +142,18 @@ const editProfile = async (req, res) => {
     }
 }
 
-const getPublicAllyProfile=async(req,res)=>{
-    try{
-        const id=req.params.publicId;
-        const profileData=await AllyProfileModel.findById(id);
-        if(!profileData)
-            return res.status(404).json({message:"User profile Not Found"})
-        return res.status(200).json({profileData:profileData});
-    }catch(err){
+const getPublicAllyProfile = async (req, res) => {
+    try {
+        const id = req.params.publicId;
+        const profileData = await AllyProfileModel.findById(id);
+        if (!profileData)
+            return res.status(404).json({ message: "User profile Not Found" })
+        return res.status(200).json({ profileData: profileData });
+    } catch (err) {
         console.log(err);
         console.log(err.message);
-        res.status(500).json({message:"Internal Server Error"})
+        res.status(500).json({ message: "Internal Server Error" })
     }
 }
 
-module.exports = { uploadProfile, getProfile, editProfile,getPublicAllyProfile };
+module.exports = { uploadProfile, getProfile, editProfile, getPublicAllyProfile };

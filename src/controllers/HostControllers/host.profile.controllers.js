@@ -1,11 +1,12 @@
 const HostProfileModel = require('../../models/HostModels/HostProfileModel')
+const createNotification = require('../../utils/createnotification');
 
 // to upload the host profile data
 const uploadProfile = async (req, res) => {
-    const {uid,email,email_verified}=req.firebaseUser;
-        // console.log(uid);
-        // console.log(email);
-        // console.log(email_verified);
+    const { uid, email, email_verified } = req.firebaseUser;
+    // console.log(uid);
+    // console.log(email);
+    // console.log(email_verified);
     try {
         // these are from frontend
         const {
@@ -42,6 +43,19 @@ const uploadProfile = async (req, res) => {
             },
         })
         await newHostProfile.save();
+
+        // send notification for host
+        await createNotification({
+            userId: newHostProfile._id,
+            userModel: "HostProfile",
+            type: "HOST_PROFILE_CREATED",
+            title: "Profile Created.",
+            message: "Your host profile has been created successfully.",
+            link: "",  // TODO: add view profile link here
+            meta: {
+                profileId: newHostProfile._id
+            }
+        })
         return res.json({
             message: "Host profile is saved successfully",
             profileId: newHostProfile._id,
@@ -57,7 +71,7 @@ const uploadProfile = async (req, res) => {
 
 const getProfile = async (req, res) => {
     try {
-        const {uid,email,email_verified,name}=req.firebaseUser;
+        const { uid, email, email_verified, name } = req.firebaseUser;
         // console.log(uid);
         // console.log(email);
         // console.log(email_verified);
@@ -82,10 +96,10 @@ const getProfile = async (req, res) => {
 // this is also working with files nd without files
 // this only supports the data with files only plain json is not supported
 const editProfile = async (req, res) => {
-    const {uid,email,email_verified}=req.firebaseUser;
-        // console.log(uid);
-        // console.log(email);
-        // console.log(email_verified);
+    const { uid, email, email_verified } = req.firebaseUser;
+    // console.log(uid);
+    // console.log(email);
+    // console.log(email_verified);
     // const firebaseUid = req.params.firebaseUid;
     try {
         // finds the host old profile
@@ -112,7 +126,7 @@ const editProfile = async (req, res) => {
         //     updates.addressDetails={};
         // if (Object.keys(addrUpdates).length) updates.addressDetails = {...updates.addressDetails,...addrUpdates};
 
-        updates.addressDetails={
+        updates.addressDetails = {
             ...profile.addressDetails,
             ...addrUpdates,
         }
@@ -123,10 +137,24 @@ const editProfile = async (req, res) => {
 
         // console.log(updates);
         const updatedProfile = await HostProfileModel.findOneAndUpdate(
-            { firebaseUid:uid },
+            { firebaseUid: uid },
             { $set: updates },
             { new: true }
         );
+
+        // send notification for host
+        await createNotification({
+            userId: updatedProfile._id,
+            userModel: "HostProfile",
+            type: "HOST_PROFILE_UPDATED",
+            title: "Profile Updated.",
+            message: "Your host profile has been updated successfully.",
+            link: "", // TODO: add view profile link here
+            meta: {
+                profileId: updatedProfile._id
+            }
+        })
+
         return res.status(200).json({
             message: "Host profile updated",
             updatedProfile: updatedProfile
@@ -181,19 +209,19 @@ const editProfile = async (req, res) => {
 //     }
 // }
 
-const getPublicHostProfile=async(req,res)=>{
-    try{
+const getPublicHostProfile = async (req, res) => {
+    try {
         //get the id from the url
-        const id=req.params.publicId;
-        const profileData=await HostProfileModel.findById(id);
-        if(!profileData)
-            return res.status(404).json({message:"User Profile Not Found"});
-        return res.status(200).json({profileData:profileData});
-    }catch(err){
+        const id = req.params.publicId;
+        const profileData = await HostProfileModel.findById(id);
+        if (!profileData)
+            return res.status(404).json({ message: "User Profile Not Found" });
+        return res.status(200).json({ profileData: profileData });
+    } catch (err) {
         console.log(err);
         console.log(err.message);
-        return res.status(500).json({message:"Internal error",error:err.message});
+        return res.status(500).json({ message: "Internal error", error: err.message });
     }
 }
 
-module.exports = { uploadProfile, getProfile, editProfile,getPublicHostProfile };
+module.exports = { uploadProfile, getProfile, editProfile, getPublicHostProfile };
