@@ -50,8 +50,8 @@ const applyTaskSchema = new mongoose.Schema(
     rejectionReason: String,
     cancellationReason: String,
 
-    hostConfirmedCompleted:Boolean,
-    allyConfirmedCompletion:Boolean,
+    // hostConfirmedCompleted:Boolean,
+    // allyConfirmedCompletion:Boolean,
   },
   { timestamps: true }
 );
