@@ -353,7 +353,7 @@ const updateApplicationStatus = async (req, res) => {
                 type: "ALLY_APPLICATION_ACCEPTED",
                 title: "Application Accepted.",
                 message: "Your application was accepted",
-                link: `/task/${task._id}/applications`,
+                link: `/view/applied/task/details/${task._id}`,
                 meta: {
                     taskId: task._id,
                     applicationId: application._id,

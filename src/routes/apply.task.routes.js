@@ -22,6 +22,7 @@ const { applyTask,
     getApplicationsCount,
     checkAllyAppliedTask,
     getMyApplicationsDetails,
+    requestTaskCompleted,
     markTaskCompleted } = require('../controllers/AllyControllers/apply.task.controller')
 
 applyTaskRouter.post('/:taskId/apply', checkAuth, applyTask);
@@ -35,5 +36,6 @@ applyTaskRouter.get('/:taskId/my-application', checkAuth, checkAllyAppliedTask);
 applyTaskRouter.get('/:taskId/applicants/count', checkAuth, getApplicationsCount);
 applyTaskRouter.patch('/:taskId/complete', checkAuth, markTaskCompleted)
 applyTaskRouter.patch('/:taskId/cancel/task', checkAuth, cancelTask)
+applyTaskRouter.patch('/request/task/completion/:taskId',checkAuth,requestTaskCompleted)
 
 module.exports = applyTaskRouter;
