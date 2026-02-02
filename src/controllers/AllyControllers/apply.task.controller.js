@@ -71,7 +71,7 @@ const applyTask = async (req, res) => {
             link: `/view/applied/task/details/${getTask._id}`,
             meta: {
                 taskId: getTask._id,
-                hostId:getTask.createdBy,
+                hostId: getTask.createdBy,
                 applicationId: newApplication._id
             }
         });
@@ -494,7 +494,7 @@ const cancelApplication = async (req, res) => {
                 type: "ALLY_TASK_CANCELLED",
                 title: "Task Cancelled.",
                 message: "You have cancelled your application for this task.",
-                link: "/job/listings", 
+                link: "/job/listings",
                 meta: {
                     taskId: getTask._id,
                     hostId: getTask.createdBy,
@@ -669,7 +669,7 @@ const markTaskCompleted = async (req, res) => {
             type: "ALLY_TASK_COMPLETED",
             title: "Task Completed.",
             message: "The host marked this task as completed",
-            link: "/ally/dashboard", 
+            link: "/ally/dashboard",
             meta: {
                 taskId: getTask._id,
                 hostId: getUser._id,
@@ -777,6 +777,58 @@ const cancelTask = async (req, res) => {
     }
 }
 
+// for ally after the task is completed (Ally)
+const requestTaskCompleted = async (req, res) => {
+    const session = await mongoose.startSession();
+    try {
+        session.startTransaction();
+        const { uid } = req.firebaseUser;
+        const taskId = req.params.taskId;
+
+        const ally = await AllyProfileModel.findOne({ firebaseUid: uid }).session(session);
+        const task = await PostTaskModel.findById(taskId).session(session);
+
+        if (!task) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ message: "task not found" })
+        }
+
+        if (!ally) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ message: "ally profile not found" })
+        }
+
+        if (task.assignedAlly?.toString() !== ally._id.toString()) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ message: "not authorized" })
+        }
+
+        if (task.status !== "assigned") {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ message: "Task not assigned" });
+        }
+
+        task.status = "completion_requested";
+        task.completionRequestedAt = new Date();
+
+        await task.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+        return res.status(200).json({ message: "Completion requested" })
+    } catch (err) {
+        await session.abortTransaction();
+        session.endSession();
+        console.log(err)
+        console.log(err.message)
+        return res.status(500).json({ message: "Internal server error" })
+    }
+}
+
 
 
 
@@ -791,5 +843,6 @@ module.exports = {
     getApplicationsCount,
     markTaskCompleted,
     cancelTask,
-    getMyApplicationsDetails
+    getMyApplicationsDetails,
+    requestTaskCompleted
 }

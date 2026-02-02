@@ -64,7 +64,7 @@ const PostTaskSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["posted", "assigned", "in-progress", "completed", "cancelled"],
+        enum: ["posted", "assigned", "in-progress", "completed", "cancelled", "completion_requested", "disputed", "expired", "refunded"],
         default: "posted"
     },
     assignedAlly: {
@@ -80,9 +80,9 @@ const PostTaskSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    isDeleted:{
-        type:Boolean,
-        default:false
+    isDeleted: {
+        type: Boolean,
+        default: false
     },
     isActive: {
         type: Boolean,
@@ -98,7 +98,29 @@ const PostTaskSchema = new mongoose.Schema({
             type: [Number],
             index: "2dsphere"
         }
-    }
+    },
+    completionRequestedAt: {
+        type: Date,
+        default: null
+    },
+    completedAt:{
+        type:Date,
+        default:null
+    },
+    expiredAt: {
+        type: Date,
+        default: null
+    },
+    // endReason: {
+    //     type: String,
+    //     enum: [
+    //         "auto_expired",
+    //         "completed",
+    //         "host_deleted",
+    //         "ally_cancelled"
+    //     ],
+    //     default: null
+    // }
 }, { timestamps: true })
 
 PostTaskSchema.index({ location: "2dsphere" });
@@ -106,3 +128,25 @@ PostTaskSchema.index({ location: "2dsphere" });
 
 const PostTaskModel = mongoose.model('ActiveTask', PostTaskSchema);
 module.exports = PostTaskModel;
+
+/*
+acceptedAt: Date,
+
+completionRequestedAt: Date,
+
+expiredAt: Date,
+
+escrowAmount: {
+  type: Number,
+  required: true
+},
+
+platformFee: {
+  type: Number,
+  required: true
+},
+
+razorpayPaymentId: String,
+razorpayOrderId: String,
+
+*/
