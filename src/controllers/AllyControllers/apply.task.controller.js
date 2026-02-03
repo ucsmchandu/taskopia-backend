@@ -614,6 +614,12 @@ const markTaskCompleted = async (req, res) => {
             return res.status(404).json({ message: "Task not found" })
         }
 
+        if (getTask.status !== "completion_requested") {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ message: "Ally not send the request for the task completion" });
+        }
+
         // get the host
         const getUser = await HostProfileModel.findOne({ firebaseUid: uid }).session(session)
         if (!getUser) {
@@ -630,7 +636,7 @@ const markTaskCompleted = async (req, res) => {
         }
 
         // get the application
-        const getApplication = await ApplyTaskModel.findOne({ task: taskId }).session(session)
+        const getApplication = await ApplyTaskModel.findOne({ task: taskId, status: "accepted" }).session(session)
         if (!getApplication) {
             await session.abortTransaction();
             session.endSession();
@@ -651,16 +657,11 @@ const markTaskCompleted = async (req, res) => {
             return res.status(400).json({ message: `Application already ${getApplication.status}` });
         }
 
-        // if accepted or assigned then its not done
-        if (!(getApplication.status === "accepted" && getTask.status === "assigned")) {
-            await session.abortTransaction();
-            session.endSession();
-            return res.status(400).json({ message: "Task cannot be completed yet. it must be assigned and the application must be accepted" })
-        }
-
         // mark then as completed
         getApplication.status = "completed"
         getTask.status = "completed"
+        getTask.completedAt = new Date();
+        getApplication.completedAt = new Date();
 
         // send notification to ally
         await createNotification({
@@ -803,7 +804,7 @@ const requestTaskCompleted = async (req, res) => {
         if (task.assignedAlly?.toString() !== ally._id.toString()) {
             await session.abortTransaction();
             session.endSession();
-            return res.status(404).json({ message: "not authorized" })
+            return res.status(403).json({ message: "not authorized" })
         }
 
         if (task.status !== "assigned") {
@@ -812,9 +813,25 @@ const requestTaskCompleted = async (req, res) => {
             return res.status(400).json({ message: "Task not assigned" });
         }
 
+        const application = await ApplyTaskModel.findOne({
+            task: task._id,
+            applicant: ally._id,
+            status: "accepted"
+        }).session(session);
+
+        if (!application) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ message: "Application not found" });
+        }
+
+        application.allyConfirmedCompletion = true;
+        application.completedAt = new Date();
+
         task.status = "completion_requested";
         task.completionRequestedAt = new Date();
 
+        await application.save({ session });
         await task.save({ session });
 
         await session.commitTransaction();
