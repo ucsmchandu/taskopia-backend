@@ -127,7 +127,7 @@ const getApplication = async (req, res) => {
         if (getTask.createdBy.toString() !== getHost._id.toString())
             return res.status(403).json({ message: "Not Authorized" });
 
-        const applications = await ApplyTaskModel.find({ task: taskId }).populate("applicant", "firstName lastName rating firebaseUid");
+        const applications = await ApplyTaskModel.find({ task: taskId }).populate("applicant", "firstName lastName rating firebaseUid").populate("task");
 
         if (applications.length === 0)
             return res.status(404).json({ message: "No Applications are Found on This Task" })
@@ -819,6 +819,35 @@ const requestTaskCompleted = async (req, res) => {
 
         await session.commitTransaction();
         session.endSession();
+
+        // send notification for the host
+        await createNotification({
+            userId: task.createdBy,
+            userModel: "HostProfile",
+            type: "HOST_ACCEPT_TASK_COMPLETION",
+            title: "New Completion Request.",
+            message: `${ally.firstName} has requested task completion.`,
+            link: `/task/${task._id}/applications`,
+            meta: {
+                taskId: task._id,
+                allyId: ally._id
+            }
+        })
+
+        // send notification for the ally
+        await createNotification({
+            userId: ally._id,
+            userModel: "AllyProfile",
+            type: "ALLY_REQUESTED_COMPLETION",
+            title: "Task Completion Sent.",
+            message: "Task Completion Request is Sent to Host.",
+            link: `/view/applied/task/details/${task._id}`,
+            meta: {
+                taskId: task._id,
+                hostId: task.createdBy,
+            }
+        })
+
         return res.status(200).json({ message: "Completion requested" })
     } catch (err) {
         await session.abortTransaction();
