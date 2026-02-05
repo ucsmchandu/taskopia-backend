@@ -7,7 +7,7 @@ const cookieParser = require('cookie-parser');
 
 // cron jobs
 const cron = require("node-cron");
-const autoExpiresTasks = require('./src/cron-jobs/autoCompleteTasks')
+const autoExpiresTasks = require('./src/cron-jobs/autoExpiresTasks')
 const autoCompleteTasks = require('./src/cron-jobs/autoCompleteTasks')
 
 
