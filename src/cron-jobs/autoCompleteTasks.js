@@ -1,6 +1,14 @@
 const PostTaskModel = require('../models/HostModels/PostTaskModel')
 const ApplyTaskModel = require('../models/AllyModels/ApplyTaskModel')
 
+/**
+ * Automatically completes tasks whose completion was requested and whose ending date has passed.
+ *
+ * Also marks the accepted application for each matching task as completed.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
 const autoCompleteTasks = async () => {
     try {
         const now = new Date();

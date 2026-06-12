@@ -1,9 +1,13 @@
 const express = require('express')
 const ai = require("./initialize-ai");
+
 /**
- * Helper function that converts a user's rough task request into structured task details using AI.
- * @param {string} userPrompt - The user's rough task request.
- * @returns {{taskTitle: string, taskDescription: string, taskBudget: number, category: string, estimatedTimeHours: number}} Resolves after generating the task details from the AI model.
+ * Generates structured task posting details from a user's rough prompt using the configured AI model.
+ *
+ * @async
+ * @param {import('express').Request} req - Express request containing userPrompt in the body.
+ * @param {import('express').Response} res - Express response used to return generated JSON task details or an error.
+ * @returns {Promise<void>}
  */
 const taskPostingHelper = async (req, res) => {
   const { userPrompt } = req.body;

@@ -1,5 +1,13 @@
 const PostTaskModel = require('../models/HostModels/PostTaskModel')
 
+/**
+ * Automatically expires posted tasks after their configured removal date.
+ *
+ * Matching tasks are marked expired, inactive, deleted, and stamped with expiredAt.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
 const autoExpiresTasks = async () => {
     try {
         const now = new Date();
