@@ -10,7 +10,11 @@ const ai = require("./initialize-ai");
  * @returns {Promise<void>}
  */
 const taskPostingHelper = async (req, res) => {
-  const { userPrompt } = req.body;
+  const { userPrompt } = req.body || {};
+
+  if (!userPrompt) {
+    return res.status(400).json({ error: "userPrompt is required" });
+  }
   /**
    * here we will receive the basic prompt from the user based on that we have to get the task posting details from the AI
    * receiving data: basic prompt (eg: i want a person for help me to things shifting from one home another home)
@@ -68,25 +72,29 @@ Example output:
       contents: prompt,
     });
 
-    const rawText = response.text;
+    const rawText = response?.text || "";
+    const cleanedText = rawText
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
 
-    let parsedData = null;
+    let parsedData = {};
 
     try {
-      parsedData = JSON.parse(rawText)
+      parsedData = JSON.parse(cleanedText);
     } catch (err) {
       parsedData = {
         error: "AI response was not valid JSON",
-        raw:rawText
-      }
+        raw: rawText,
+      };
     }
+
     return res.status(200).json(parsedData);
-    console.log(response.text);
   } catch (err) {
     return res.status(500).json({
       error: "Failed to generate the task details.",
-      details: err.message
-    })
+      details: err.message,
+    });
   }
 };
 
