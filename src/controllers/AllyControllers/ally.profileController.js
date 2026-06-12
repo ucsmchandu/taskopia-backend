@@ -1,6 +1,14 @@
 const AllyProfileModel = require('../../models/AllyModels/AllyProfileModel')
 const createNotification = require('../../utils/createnotification');
 
+/**
+ * Creates an ally profile for the authenticated Firebase user.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated request containing ally profile fields in the body and an optional uploaded profile photo.
+ * @param {import('express').Response} res - Express response used to return the created ally profile.
+ * @returns {Promise<void>}
+ */
 const uploadProfile = async (req, res) => {
     try {
         const { uid, email, email_verified } = req.firebaseUser;
@@ -64,6 +72,14 @@ const uploadProfile = async (req, res) => {
     }
 }
 
+/**
+ * Gets the authenticated ally user's profile.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated request with firebaseUser populated by middleware.
+ * @param {import('express').Response} res - Express response used to return the ally profile.
+ * @returns {Promise<void>}
+ */
 const getProfile = async (req, res) => {
     try {
         const { uid } = req.firebaseUser;
@@ -79,6 +95,14 @@ const getProfile = async (req, res) => {
     }
 }
 
+/**
+ * Updates the authenticated ally user's profile fields and optional profile photo.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated request containing editable profile fields in the body and an optional uploaded file.
+ * @param {import('express').Response} res - Express response used to return the updated ally profile.
+ * @returns {Promise<void>}
+ */
 const editProfile = async (req, res) => {
     try {
         const { uid } = req.firebaseUser;
@@ -141,6 +165,14 @@ const editProfile = async (req, res) => {
     }
 }
 
+/**
+ * Gets a public ally profile by profile id.
+ *
+ * @async
+ * @param {import('express').Request} req - Express request containing publicId in route params.
+ * @param {import('express').Response} res - Express response used to return the public ally profile.
+ * @returns {Promise<void>}
+ */
 const getPublicAllyProfile = async (req, res) => {
     try {
         const id = req.params.publicId;

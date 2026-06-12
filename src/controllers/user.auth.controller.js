@@ -5,6 +5,14 @@ const generateToken = require('../utils/jwtToken');
 const AllyProfileModel = require('../models/AllyModels/AllyProfileModel');
 const HostProfileModel = require('../models/HostModels/HostProfileModel')
 
+/**
+ * Registers a new Taskopia user after verifying the Firebase ID token.
+ *
+ * @async
+ * @param {import('express').Request} req - Express request containing firebaseToken, userName, email, and userType in the body.
+ * @param {import('express').Response} res - Express response used to return the created user summary or an error.
+ * @returns {Promise<void>}
+ */
 const register = async (req, res) => {
     let decoded;
     try {
@@ -56,6 +64,14 @@ const register = async (req, res) => {
     }
 }
 
+/**
+ * Logs in an existing user by verifying their Firebase ID token and setting a JWT cookie.
+ *
+ * @async
+ * @param {import('express').Request} req - Express request containing firebaseToken in the body.
+ * @param {import('express').Response} res - Express response used to return user data or an authentication error.
+ * @returns {Promise<void>}
+ */
 const login = async (req, res) => {
     try {
         const { firebaseToken } = req.body;
@@ -86,6 +102,13 @@ const login = async (req, res) => {
     }
 }
 
+/**
+ * Logs out the current user by clearing the JWT cookie.
+ *
+ * @param {import('express').Request} req - Express request.
+ * @param {import('express').Response} res - Express response used to confirm logout.
+ * @returns {Promise<void>}
+ */
 const logout = async (req, res) => {
     res.clearCookie("jwt", {
         httpOnly: true,
@@ -98,6 +121,14 @@ const logout = async (req, res) => {
 }
 
 //this is for popup signup
+/**
+ * Creates or logs in a user from Firebase popup authentication.
+ *
+ * @async
+ * @param {import('express').Request} req - Express request containing firebaseToken and userType in the body.
+ * @param {import('express').Response} res - Express response used to return the existing or newly created user summary.
+ * @returns {Promise<void>}
+ */
 const autoSignup = async (req, res) => {
     let decoded;
     try {
@@ -159,6 +190,14 @@ const autoSignup = async (req, res) => {
 }
 
 // to check that whether the user completes the profile setup or not
+/**
+ * Marks the authenticated user's profile setup as completed after confirming the role profile exists.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated Express request with firebaseUser populated by middleware.
+ * @param {import('express').Response} res - Express response used to return the updated user or an error.
+ * @returns {Promise<void>}
+ */
 const updateProfile = async (req, res) => {
     try {
         const userId = req.firebaseUser.userId;
@@ -196,6 +235,14 @@ const updateProfile = async (req, res) => {
 }
 
 // checks using the jwt token
+/**
+ * Returns the authenticated user's basic auth and profile setup state.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated Express request with firebaseUser populated by middleware.
+ * @param {import('express').Response} res - Express response used to return auth metadata.
+ * @returns {Promise<void>}
+ */
 const authMe = async (req, res) => {
     try {
         const id = req.firebaseUser.userId;

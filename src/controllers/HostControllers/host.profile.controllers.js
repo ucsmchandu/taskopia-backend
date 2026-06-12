@@ -2,6 +2,14 @@ const HostProfileModel = require('../../models/HostModels/HostProfileModel')
 const createNotification = require('../../utils/createnotification');
 
 // to upload the host profile data
+/**
+ * Creates a host profile for the authenticated Firebase user.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated request containing host profile fields and uploaded profile/business images.
+ * @param {import('express').Response} res - Express response used to return the created host profile.
+ * @returns {Promise<void>}
+ */
 const uploadProfile = async (req, res) => {
     const { uid, email, email_verified } = req.firebaseUser;
     // console.log(uid);
@@ -69,6 +77,14 @@ const uploadProfile = async (req, res) => {
     }
 }
 
+/**
+ * Gets the authenticated host user's profile.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated request with firebaseUser populated by middleware.
+ * @param {import('express').Response} res - Express response used to return the host profile.
+ * @returns {Promise<void>}
+ */
 const getProfile = async (req, res) => {
     try {
         const { uid, email, email_verified, name } = req.firebaseUser;
@@ -95,6 +111,14 @@ const getProfile = async (req, res) => {
 
 // this is also working with files nd without files
 // this only supports the data with files only plain json is not supported
+/**
+ * Updates the authenticated host user's profile fields and optional uploaded images.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated request containing editable host profile fields and optional uploaded files.
+ * @param {import('express').Response} res - Express response used to return the updated host profile.
+ * @returns {Promise<void>}
+ */
 const editProfile = async (req, res) => {
     const { uid, email, email_verified } = req.firebaseUser;
     // console.log(uid);
@@ -209,6 +233,14 @@ const editProfile = async (req, res) => {
 //     }
 // }
 
+/**
+ * Gets a public host profile by profile id.
+ *
+ * @async
+ * @param {import('express').Request} req - Express request containing publicId in route params.
+ * @param {import('express').Response} res - Express response used to return the public host profile.
+ * @returns {Promise<void>}
+ */
 const getPublicHostProfile = async (req, res) => {
     try {
         //get the id from the url

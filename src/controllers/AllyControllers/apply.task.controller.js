@@ -17,6 +17,14 @@ const User = require("../../models/User")
 const mongoose = require('mongoose')
 
 // for ally
+/**
+ * Creates an application for an authenticated ally on an open task.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated ally request containing taskId in route params and coverMessage in the body.
+ * @param {import('express').Response} res - Express response used to return the created application.
+ * @returns {Promise<void>}
+ */
 const applyTask = async (req, res) => {
     try {
         const { uid } = req.firebaseUser;
@@ -111,6 +119,14 @@ const applyTask = async (req, res) => {
 }
 
 // this is for host to see the applications for the task
+/**
+ * Gets all applications for a task owned by the authenticated host.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated host request containing taskId in route params.
+ * @param {import('express').Response} res - Express response used to return populated task applications.
+ * @returns {Promise<void>}
+ */
 const getApplication = async (req, res) => {
     try {
         const taskId = req.params.taskId;
@@ -145,6 +161,14 @@ const getApplication = async (req, res) => {
 }
 
 // this is for ally to see their applied task (only get the tasks)
+/**
+ * Gets the authenticated ally's submitted applications with basic task and host details.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated ally request with firebaseUser populated by middleware.
+ * @param {import('express').Response} res - Express response used to return the ally's applied tasks.
+ * @returns {Promise<void>}
+ */
 const getMyApplications = async (req, res) => {
     try {
         const { uid } = req.firebaseUser;
@@ -169,6 +193,14 @@ const getMyApplications = async (req, res) => {
 }
 
 // this is for ally to get the full details about the applied task
+/**
+ * Gets full details for one task application belonging to the authenticated ally.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated ally request containing taskId in route params.
+ * @param {import('express').Response} res - Express response used to return the populated application details.
+ * @returns {Promise<void>}
+ */
 const getMyApplicationsDetails = async (req, res) => {
     try {
         const { uid } = req.firebaseUser;
@@ -197,6 +229,14 @@ const getMyApplicationsDetails = async (req, res) => {
 }
 
 // this for ally to get one application
+/**
+ * Gets a single application by id if it belongs to the authenticated ally.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated ally request containing applicationId in route params.
+ * @param {import('express').Response} res - Express response used to return the application document.
+ * @returns {Promise<void>}
+ */
 const getSingleApplication = async (req, res) => {
     try {
         const applicationId = req.params.applicationId;
@@ -222,6 +262,14 @@ const getSingleApplication = async (req, res) => {
 }
 
 // to update the status of the application (for host)
+/**
+ * Accepts or rejects an application for a task owned by the authenticated host.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated host request containing application id in params and accepted/rejected status in the body.
+ * @param {import('express').Response} res - Express response used to return the updated application.
+ * @returns {Promise<void>}
+ */
 const updateApplicationStatus = async (req, res) => {
     const session = await mongoose.startSession();
 
@@ -414,6 +462,14 @@ const updateApplicationStatus = async (req, res) => {
 };
 
 // to cancel the application (for ally)
+/**
+ * Cancels an application owned by the authenticated ally and reopens the task when needed.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated ally request containing application id in route params.
+ * @param {import('express').Response} res - Express response used to return the cancelled application.
+ * @returns {Promise<void>}
+ */
 const cancelApplication = async (req, res) => {
     const session = await mongoose.startSession();
     try {
@@ -537,6 +593,14 @@ const cancelApplication = async (req, res) => {
 }
 
 // for checking that ally applied for the task or not. this also return the applied tasks (for ally)
+/**
+ * Checks whether the authenticated ally has applied to a specific task.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated ally request containing taskId in route params.
+ * @param {import('express').Response} res - Express response used to return applied status and application data when found.
+ * @returns {Promise<void>}
+ */
 const checkAllyAppliedTask = async (req, res) => {
     try {
         const { uid } = req.firebaseUser;
@@ -567,6 +631,14 @@ const checkAllyAppliedTask = async (req, res) => {
 }
 
 // to get the count of application for a particular task (for host)
+/**
+ * Gets the applications count for a task owned by the authenticated host.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated host request containing taskId in route params.
+ * @param {import('express').Response} res - Express response used to return the task applications count.
+ * @returns {Promise<void>}
+ */
 const getApplicationsCount = async (req, res) => {
     try {
         const { uid } = req.firebaseUser;
@@ -598,6 +670,14 @@ const getApplicationsCount = async (req, res) => {
 }
 
 // to mark the task completed (for host)
+/**
+ * Marks a completion-requested task as completed for the authenticated host.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated host request containing taskId in route params.
+ * @param {import('express').Response} res - Express response used to return the completed task and application.
+ * @returns {Promise<void>}
+ */
 const markTaskCompleted = async (req, res) => {
     const session = await mongoose.startSession();
     try {
@@ -714,6 +794,14 @@ const markTaskCompleted = async (req, res) => {
 }
 
 // to cancel the task (for host)  TODO: add the notification if need 
+/**
+ * Cancels a task owned by the authenticated host and cancels all non-final applications.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated host request containing taskId in route params.
+ * @param {import('express').Response} res - Express response used to return the cancelled task.
+ * @returns {Promise<void>}
+ */
 const cancelTask = async (req, res) => {
     const session = await mongoose.startSession()
     try {
@@ -779,6 +867,14 @@ const cancelTask = async (req, res) => {
 }
 
 // for ally after the task is completed (Ally)
+/**
+ * Requests completion review for an assigned task by the authenticated ally.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated ally request containing taskId in route params.
+ * @param {import('express').Response} res - Express response used to confirm the completion request.
+ * @returns {Promise<void>}
+ */
 const requestTaskCompleted = async (req, res) => {
     const session = await mongoose.startSession();
     try {

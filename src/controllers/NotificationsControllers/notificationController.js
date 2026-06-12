@@ -3,6 +3,14 @@ const AllyProfileModel = require('../../models/AllyModels/AllyProfileModel')
 const HostProfileModel = require('../../models/HostModels/HostProfileModel')
 
 // to get the notifiactions
+/**
+ * Gets recent notifications for the authenticated ally or host profile.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated request with firebaseUser uid and userType.
+ * @param {import('express').Response} res - Express response used to return up to 50 notifications.
+ * @returns {Promise<void>}
+ */
 const getNotifications = async (req, res) => {
     const { uid, userType } = req.firebaseUser;
     // console.log(uid)
@@ -28,6 +36,14 @@ const getNotifications = async (req, res) => {
 }
 
 // to mark a single notification as read
+/**
+ * Marks one notification as read for the authenticated user.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated request containing notification id in route params.
+ * @param {import('express').Response} res - Express response used to return the updated notification.
+ * @returns {Promise<void>}
+ */
 const markAsRead = async (req, res) => {
     const { uid, userType } = req.firebaseUser;
     const notificationId = req.params.id;
@@ -61,6 +77,14 @@ const markAsRead = async (req, res) => {
 }
 
 // to mark all notifications as read
+/**
+ * Marks all unread notifications as read for the authenticated user.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated request with firebaseUser uid and userType.
+ * @param {import('express').Response} res - Express response used to confirm all notifications were marked read.
+ * @returns {Promise<void>}
+ */
 const markAllAsRead = async (req, res) => {
     const { uid, userType } = req.firebaseUser;
     let user;

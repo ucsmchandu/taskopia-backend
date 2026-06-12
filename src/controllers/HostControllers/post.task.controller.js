@@ -3,6 +3,14 @@ const HostProfileModel = require('../../models/HostModels/HostProfileModel')
 const ApplyTaskModel = require('../../models/AllyModels/ApplyTaskModel');
 const createNotification = require('../../utils/createnotification');
 
+/**
+ * Creates a new task for the authenticated host profile.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated request containing task fields, location coordinates, and an optional attachment file.
+ * @param {import('express').Response} res - Express response used to return the created task id.
+ * @returns {Promise<void>}
+ */
 const uploadTask = async (req, res) => {
     const { uid, userId } = req.firebaseUser;
     const findHostProfile = await HostProfileModel.findOne({ firebaseUid: uid });
@@ -85,6 +93,14 @@ const uploadTask = async (req, res) => {
 }
 
 // to get all tasks including the assigned and completed tasks
+/**
+ * Gets all tasks regardless of status.
+ *
+ * @async
+ * @param {import('express').Request} req - Express request.
+ * @param {import('express').Response} res - Express response used to return all task documents.
+ * @returns {Promise<void>}
+ */
 const getAllTasks = async (req, res) => {
     try {
         const getTasks = await PostTaskModel.find({});
@@ -102,6 +118,14 @@ const getAllTasks = async (req, res) => {
 }
 
 // to get the only active tasks
+/**
+ * Gets active posted tasks with optional search, urgency, pay, and distance filters.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated request with optional sort, search, lat, lng, and distance query params.
+ * @param {import('express').Response} res - Express response used to return matching active tasks.
+ * @returns {Promise<void>}
+ */
 const getActiveTasks = async (req, res) => {
     try {
         const { sort, lat, lng, distance, search } = req.query;
@@ -161,6 +185,14 @@ const getActiveTasks = async (req, res) => {
 };
 
 // for host
+/**
+ * Gets all tasks created by the authenticated host.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated host request with firebaseUser populated by middleware.
+ * @param {import('express').Response} res - Express response used to return the host's tasks.
+ * @returns {Promise<void>}
+ */
 const getHostTasks = async (req, res) => {
     try {
         const { uid } = req.firebaseUser;
@@ -183,6 +215,14 @@ const getHostTasks = async (req, res) => {
     }
 }
 
+/**
+ * Gets a task by id and includes limited host profile data.
+ *
+ * @async
+ * @param {import('express').Request} req - Express request containing task id in route params.
+ * @param {import('express').Response} res - Express response used to return the task document.
+ * @returns {Promise<void>}
+ */
 const getTask = async (req, res) => {
     try {
         const id = req.params.id;
@@ -202,6 +242,14 @@ const getTask = async (req, res) => {
 }
 
 // for host
+/**
+ * Soft deletes a posted task owned by the authenticated host and notifies applicants.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated host request containing taskId in route params.
+ * @param {import('express').Response} res - Express response used to return the deleted task state.
+ * @returns {Promise<void>}
+ */
 const deleteTask = async (req, res) => {
     try {
         const id = req.params.taskId;
@@ -273,6 +321,14 @@ const deleteTask = async (req, res) => {
 }
 
 // for host
+/**
+ * Updates an authenticated host's task fields and optional attachment, then notifies applicants.
+ *
+ * @async
+ * @param {import('express').Request} req - Authenticated host request containing task id in route params, editable fields, and optional attachment.
+ * @param {import('express').Response} res - Express response used to return the updated task.
+ * @returns {Promise<void>}
+ */
 const editTask = async (req, res) => {
     try {
         const uid = req.firebaseUser.uid;
