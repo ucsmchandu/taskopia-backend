@@ -10,7 +10,8 @@ const cron = require("node-cron");
 const autoExpiresTasks = require('./src/cron-jobs/autoExpiresTasks')
 const autoCompleteTasks = require('./src/cron-jobs/autoCompleteTasks')
 
-
+// AI related
+const AIRoute = require('./src/services/ai-services/index')
 
 
 connectDB();
@@ -24,6 +25,9 @@ app.use(express.json());
 app.use(cookieParser())
 app.use(express.urlencoded({ extended: true }))
 app.use('/taskopia/u1/api', route);
+
+// AI route
+app.use('/taskopia/ai/api', AIRoute);
 
 // jobs for every 10 min
 cron.schedule("*/10 * * * *", async () => {
