@@ -1,5 +1,5 @@
 const express = require('express')
-const ai = require("./initialize-ai");
+const ai = require("../initialize-ai");
 
 /**
  * Generates structured task posting details from a user's rough prompt using the configured AI model.
