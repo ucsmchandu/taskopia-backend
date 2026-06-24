@@ -1,7 +1,25 @@
+const {redisClient}=require('../../config/redis');
 const PostTaskModel = require('../../models/HostModels/PostTaskModel');
 const HostProfileModel = require('../../models/HostModels/HostProfileModel')
 const ApplyTaskModel = require('../../models/AllyModels/ApplyTaskModel');
 const createNotification = require('../../utils/createnotification');
+
+const tasksCacheKey = "tasks:all";
+const getTaskCacheKey = (taskId) => `task:${taskId}`;
+
+const invalidateTaskCaches = async (taskId) => {
+    const keys = [tasksCacheKey];
+
+    if (taskId) {
+        keys.push(getTaskCacheKey(taskId));
+    }
+
+    try {
+        await redisClient.del(...keys);
+    } catch (err) {
+        console.error("redis cache invalidation failed:", err);
+    }
+};
 
 /**
  * Creates a new task for the authenticated host profile.
@@ -64,6 +82,9 @@ const uploadTask = async (req, res) => {
         });
         await newTask.save();
 
+        // invalidate the caches
+        await invalidateTaskCaches(newTask._id);
+
         // send the notification for the host
         await createNotification({
             userId: findHostProfile._id,
@@ -103,9 +124,32 @@ const uploadTask = async (req, res) => {
  */
 const getAllTasks = async (req, res) => {
     try {
-        const getTasks = await PostTaskModel.find({});
-        if (!getTasks)
+        // get the data from the cache and return the data if there is data in cache
+        try {
+            const cachedTasks = await redisClient.get(tasksCacheKey);
+            if (cachedTasks) {
+                return res.status(200).json({
+                    tasks: JSON.parse(cachedTasks)
+                })
+            }
+        } catch (err) {
+            console.error("redis cache read failed:", err);
+        }
+
+        // console.log("cache missed");
+        const getTasks = await PostTaskModel.find().sort({createdAt: -1});
+        
+        if (!getTasks.length)
             return res.status(404).json({ message: "Tasks not found" });
+
+        // if there is no data in cache then storing in cache
+        try {
+            await redisClient.set(tasksCacheKey, JSON.stringify(getTasks), {
+                EX: 300
+            })
+        } catch (err) {
+            console.error("redis cache write failed:", err);
+        }
 
         return res.status(200).json({
             tasks: getTasks
@@ -226,9 +270,32 @@ const getHostTasks = async (req, res) => {
 const getTask = async (req, res) => {
     try {
         const id = req.params.id;
+
+        // get the data from the cache
+        try {
+            const cacheTask = await redisClient.get(getTaskCacheKey(id))
+            if (cacheTask) {
+                return res.status(200).json({
+                    task: JSON.parse(cacheTask)
+                })
+            }
+        } catch (err) {
+            console.error("redis cache read failed:", err);
+        }
+
         const task = await PostTaskModel.findById(id).populate("createdBy", "firstName lastName rating");
         if (!task)
             return res.status(404).json({ message: "Task not found" });
+
+        // store in cache
+        try {
+            await redisClient.set(getTaskCacheKey(id), JSON.stringify(task), {
+                EX: 600
+            });
+        } catch (err) {
+            console.error("redis cache write failed:", err);
+        }
+
         return res.status(200).json({
             task: task
         });
@@ -273,6 +340,9 @@ const deleteTask = async (req, res) => {
 
         task.isDeleted = true;
         await task.save();
+
+        // invalidate the caches
+        await invalidateTaskCaches(id);
 
         // Get all applicants for this task to notify them
         const applicants = await ApplyTaskModel.find({ task: id });
@@ -363,6 +433,9 @@ const editTask = async (req, res) => {
             { $set: updates },
             { new: true }
         )
+
+        // invalidate the caches
+        await invalidateTaskCaches(taskId);
 
         // Get all applicants for this task to notify them
         const applicants = await ApplyTaskModel.find({ task: taskId });
