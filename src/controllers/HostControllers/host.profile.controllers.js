@@ -1,5 +1,23 @@
 const HostProfileModel = require('../../models/HostModels/HostProfileModel')
 const createNotification = require('../../utils/createnotification');
+const {redisClient}=require('../../config/redis')
+
+
+const profileCacheKey="hostProfile:all";
+const getProfileCacheKey=(id)=>`hostProfile:${id}`;
+
+const invalidateProfileCaches=async(profileId)=>{
+    const keys=[profileCacheKey];
+
+    if(profileId)
+        keys.push(getProfileCacheKey(profileId))
+
+    try{
+        await redisClient.del(...keys);
+    }catch(err){
+        console.error('redis invalidation error:',err)
+    }
+}
 
 // to upload the host profile data
 /**
@@ -52,6 +70,9 @@ const uploadProfile = async (req, res) => {
         })
         await newHostProfile.save();
 
+        // invalidate cache
+        await invalidateProfileCaches(newHostProfile.firebaseUid);
+
         // send notification for host
         await createNotification({
             userId: newHostProfile._id,
@@ -94,12 +115,33 @@ const getProfile = async (req, res) => {
         // console.log(name);
         // const {firebaseId}=req.body;
         // const firebaseId = req.params.firebaseId;
+
+        try{
+            const cachedProfile=await redisClient.get(getProfileCacheKey(uid))
+            if(cachedProfile){
+                return res.status(200).json({
+                    profileData:JSON.parse(cachedProfile)
+                })
+            }
+        }catch(err){
+            console.error("redis cache error:",err);
+        }
+
         const profileData = await HostProfileModel.findOne({
             firebaseUid: uid
         });
         // console.log(firebaseId)
         if (!profileData)
             return res.status(404).json({ message: "user not found" });
+
+        try{
+            await redisClient.set(getProfileCacheKey(uid),JSON.stringify(profileData),{
+                EX:900
+            })
+        }catch(err){
+            console.error("redis cache error:",err);
+        }
+
         return res.status(200).json({ profileData: profileData });
     } catch (err) {
         console.log(err);
@@ -155,7 +197,7 @@ const editProfile = async (req, res) => {
             ...addrUpdates,
         }
 
-        if (req.files?.businessProfilePhotoUrl?.length) updates.userProfilePhotoUrl = req.files?.businessProfilePhotoUrl?.[0]?.path;
+        if (req.files?.userProfilePhotoUrl?.length) updates.userProfilePhotoUrl = req.files?.userProfilePhotoUrl?.[0]?.path;
         if (req.files?.businessProfilePhotoUrl?.length) updates.businessProfilePhotoUrl = req.files?.businessProfilePhotoUrl?.[0]?.path;
 
 
@@ -165,6 +207,9 @@ const editProfile = async (req, res) => {
             { $set: updates },
             { new: true }
         );
+
+        // invalidate cache
+        await invalidateProfileCaches(updatedProfile.firebaseUid)
 
         // send notification for host
         await createNotification({
@@ -245,9 +290,30 @@ const getPublicHostProfile = async (req, res) => {
     try {
         //get the id from the url
         const id = req.params.publicId;
+
+        try{
+            const cacheProfile=await redisClient.get(getProfileCacheKey(id))
+            if(cacheProfile){
+                return res.status(200).json({
+                    profileData:JSON.parse(cacheProfile)
+                })
+            }
+        }catch(err){
+            console.error('redis cache error :',err);
+        }
+
         const profileData = await HostProfileModel.findById(id);
         if (!profileData)
             return res.status(404).json({ message: "User Profile Not Found" });
+
+        try{
+            await redisClient.set(getProfileCacheKey(profileData._id),JSON.stringify(profileData),{
+                EX:600
+            })
+        }catch(err){
+            console.error('redis cache error:',err);
+        }
+
         return res.status(200).json({ profileData: profileData });
     } catch (err) {
         console.log(err);
