@@ -13,8 +13,11 @@ const autoCompleteTasks = require('./src/cron-jobs/autoCompleteTasks')
 // AI related
 const AIRoute = require('./src/services/ai-services/index')
 
+// redis
+const {connectRedis}=require('./src/config/redis')
 
 connectDB();
+connectRedis();
 const app = express();
 app.use(cors({
     origin: ["http://localhost:5173", 'https://taskopia-one.vercel.app'],
