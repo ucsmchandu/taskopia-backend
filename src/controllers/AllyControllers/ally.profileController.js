@@ -1,5 +1,23 @@
+const {redisClient}=require('../../config/redis')
 const AllyProfileModel = require('../../models/AllyModels/AllyProfileModel')
 const createNotification = require('../../utils/createnotification');
+
+
+const profileCacheKey="allyProfile:all";
+const getProfileCacheKey=(id)=>`allyProfile:${id}`;
+
+const invalidateProfileCaches=async(profileId)=>{
+    const keys=[profileCacheKey];
+
+    if(profileId)
+        keys.push(getProfileCacheKey(profileId))
+
+    try{
+        await redisClient.del(...keys);
+    }catch(err){
+        console.error('redis invalidation error',err);
+    }
+}
 
 /**
  * Creates an ally profile for the authenticated Firebase user.
@@ -48,6 +66,9 @@ const uploadProfile = async (req, res) => {
 
         await newAllyProfile.save();
 
+        // invalidate the cache
+        await invalidateProfileCaches(newAllyProfile.firebaseUid)
+
         // send notification for ally
         await createNotification({
             userId: newAllyProfile._id,
@@ -84,9 +105,29 @@ const getProfile = async (req, res) => {
     try {
         const { uid } = req.firebaseUser;
 
+        try{
+            const cachedProfile=await redisClient.get(getProfileCacheKey(uid));
+            if(cachedProfile){
+                return res.status(200).json({
+                    profileData:JSON.parse(cachedProfile)
+                })
+            }
+        }catch(err){
+            console.error('redis cache error:',err);
+        }
+
         const profileData = await AllyProfileModel.findOne({ firebaseUid: uid })
         if (!profileData)
             return res.status(404).json({ message: "user not found" });
+
+        try{
+            await redisClient.set(getProfileCacheKey(uid),JSON.stringify(profileData),{
+                EX:300
+            });
+        }catch(err){
+            console.error('redis cache error:',err);
+        }
+
         return res.status(200).json({ profileData: profileData });
     } catch (err) {
         console.log(err);
@@ -140,6 +181,9 @@ const editProfile = async (req, res) => {
             { new: true }
         );
 
+        // invalidate cache
+        await invalidateProfileCaches(uid);
+
         // send notification for the ally
         await createNotification({
             userId: updatedProfile._id,
@@ -176,9 +220,31 @@ const editProfile = async (req, res) => {
 const getPublicAllyProfile = async (req, res) => {
     try {
         const id = req.params.publicId;
+
+        // cache
+        try{
+            const cacheProfile=await redisClient.get(getProfileCacheKey(id));
+            if(cacheProfile){
+                return res.status(200).json({
+                    profileData:JSON.parse(cacheProfile)
+                })
+            }
+        }catch(err){
+            console.error('redis cache error:',err);
+        }
+
         const profileData = await AllyProfileModel.findById(id);
         if (!profileData)
             return res.status(404).json({ message: "User profile Not Found" })
+
+        try{
+            await redisClient.set(getProfileCacheKey(id),JSON.stringify(profileData),{
+                EX:300
+            })
+        }catch(err){
+            console.error('redis cache error:',err);
+        }
+
         return res.status(200).json({ profileData: profileData });
     } catch (err) {
         console.log(err);
