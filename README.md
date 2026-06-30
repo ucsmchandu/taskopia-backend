@@ -161,6 +161,33 @@ The JWT cookie is configured as:
 
 Because `secure: true` is always enabled, browser cookie behavior may require HTTPS in non-local deployments.
 
+## Rate Limiting and 429 Responses
+
+The backend includes request rate limiting to protect the API from repeated bursts of traffic and repeated auth attempts.
+
+Current rate limiter setup:
+
+- The shared limiter is defined in [src/middlewares/rateLimiter.js](src/middlewares/rateLimiter.js).
+- The global limiter is mounted in [index.js](index.js) with `app.use(rateLimiter)` so it applies to the API before the route handlers run.
+- A stricter `authRateLimiter` is applied to auth-related routes in [src/routes/user.routes.js](src/routes/user.routes.js).
+
+How the limits behave:
+
+- The global limiter allows up to 100 requests per 15 minutes per IP.
+- The auth limiter allows up to 15 auth-related requests per 15 minutes per IP.
+- When the limit is exceeded, the API returns `429 Too Many Requests` with a clear JSON message.
+
+Why this matters:
+
+- It helps protect the app from brute-force login attempts and excessive repeated requests.
+- The frontend can show a clear error so the user understands the request was blocked because of too many attempts.
+- The response format is consistent and easy for the frontend to display through toast notifications or other UI feedback.
+
+Important note:
+
+- Because the app uses IP-based rate limiting, all requests from the same IP share the same limit window.
+- If a user repeats login, register, or other rate-limited actions too quickly, they will temporarily receive the `429` response until the window resets.
+
 ## API Overview
 
 ### Auth
