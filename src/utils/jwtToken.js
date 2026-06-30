@@ -17,6 +17,7 @@ const jwt = require('jsonwebtoken')
  */
 const generateToken = async ({ decoded },userId, userType, res) => {
     const { uid, email, name, email_verified } = decoded;
+    const isProduction = process.env.NODE_ENV === "production";
     try {
         const token = jwt.sign({ uid, email, email_verified, name,userId, userType }, process.env.JWT_SECRET, {
             expiresIn: "7d"
@@ -24,8 +25,8 @@ const generateToken = async ({ decoded },userId, userType, res) => {
         res.cookie("jwt", token, {
             maxAge: 7 * 24 * 60 * 60 * 1000,
             httpOnly: true,
-            secure: true,
-            sameSite: "None"
+            secure: isProduction,
+            sameSite: isProduction ? "None" : "lax"
         })
         return token;
     } catch (err) {

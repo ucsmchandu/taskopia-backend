@@ -14,11 +14,17 @@ const autoCompleteTasks = require('./src/cron-jobs/autoCompleteTasks')
 const AIRoute = require('./src/services/ai-services/index')
 
 // redis
-const {connectRedis}=require('./src/config/redis')
+const {connectRedis}=require('./src/config/redis');
+
+// rate limiter
+const { rateLimiter } = require('./src/middlewares/rateLimiter');
+
 
 connectDB();
 connectRedis();
+
 const app = express();
+app.use(rateLimiter);
 app.use(cors({
     origin: ["http://localhost:5173", 'https://taskopia-one.vercel.app'],
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],

@@ -112,8 +112,8 @@ const login = async (req, res) => {
 const logout = async (req, res) => {
     res.clearCookie("jwt", {
         httpOnly: true,
-        secure: true,
-        sameSite: "none",
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     });
     res.status(200).json({
         message: "Logged out successful"
@@ -247,12 +247,17 @@ const authMe = async (req, res) => {
     try {
         const id = req.firebaseUser.userId;
         const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
         res.json({
             firebaseId: req.firebaseUser.uid,
             userId: req.firebaseUser.userId,
             email: req.firebaseUser.email,
             verified: req.firebaseUser.email_verified,
-            userType: user ? user.userType : null,
+            userType: user.userType,
             profileSetup:user.isProfileSetupCompleted,
             message: "User Authenticated"
         })
