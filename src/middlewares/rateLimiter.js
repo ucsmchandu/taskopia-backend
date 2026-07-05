@@ -4,7 +4,7 @@ const windowMs = 15 * 60 * 1000;
 
 const rateLimiter=rateLimit({
     windowMs:windowMs,
-    limit:100,
+    limit:200,
     standardHeaders:true,
     legacyHeaders:false,
     handler:(req,res)=>{
@@ -17,7 +17,7 @@ const rateLimiter=rateLimit({
 
 const authRateLimiter=rateLimit({
     windowMs:windowMs,
-    limit:15,
+    limit:20,
     standardHeaders:true,
     legacyHeaders:false,
     handler:(req,res)=>{
