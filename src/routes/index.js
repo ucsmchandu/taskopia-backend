@@ -8,6 +8,7 @@ const taskRouter = require("./task.routes");
 const allyProfileRouter=require('./ally.routes')
 const applyTaskRouter=require('./apply.task.routes')
 const notificationRouter=require('./user.notification.routes')
+const rateRouter=require('./rating.routes');
 // const mailRouter=require('./mail');
 //  router.use('/mail',mailRouter);
 
@@ -28,6 +29,9 @@ router.use('/application/tasks',applyTaskRouter);
 
 // notification
 router.use('/notifications',notificationRouter);
+
+// rating router
+router.use('/ratings',rateRouter);
 
 module.exports = router;
 
