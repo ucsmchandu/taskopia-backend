@@ -44,7 +44,11 @@ const sendActionMail = ({ to, subject, greeting, paragraphs, action }) => {
         .join('\n\n');
 
     const html = buildEmail({ title: subject, greeting, paragraphs, action });
-    return sendEmail(to, subject, text, html);
+    sendEmail(to, subject, text, html).catch((error) => {
+        console.error(`Failed to queue "${subject}" email:`, error);
+    });
+
+    return Promise.resolve(null);
 };
 
 const sendRegistrationMail = ({ to, userName = 'there', userType }) =>
