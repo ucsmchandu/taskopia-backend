@@ -15,6 +15,17 @@ const HostProfileModel = require("../../models/HostModels/HostProfileModel")
 const createNotification = require('../../utils/createnotification')
 const User = require("../../models/User")
 const mongoose = require('mongoose')
+const {
+    sendTaskApplicationSubmittedMail,
+    sendNewApplicantMail,
+    sendApplicationAcceptedMail,
+    sendApplicationRejectedMail,
+    sendHostAcceptedApplicationMail,
+    sendApplicationCancelledMail,
+    sendCompletionRequestedMail,
+    sendTaskCompletedMail,
+    sendTaskCancelledMail
+} = require('../MailControllers/mail.controllers')
 
 // for ally
 /**
@@ -46,6 +57,8 @@ const applyTask = async (req, res) => {
         const getTask = await PostTaskModel.findById(taskId);
         if (!getTask)
             return res.status(404).json({ message: "Task not Found" })
+
+        const hostProfile = await HostProfileModel.findById(getTask.createdBy);
 
         if (getTask.createdBy.toString() === allyProfile._id.toString())
             return res.status(400).json({ message: "You cannot apply to your own task" });
@@ -104,16 +117,30 @@ const applyTask = async (req, res) => {
             { $inc: { applicationsCount: 1 } }
         );
 
-        return res.status(200).json({
+        res.status(200).json({
             message: "Your Application is Created successfully",
             applicationDetails: newApplication
         });
 
+        // send mails
+        await sendTaskApplicationSubmittedMail({
+            to: allyProfile.gmail,
+            allyName: allyProfile.firstName,
+            taskTitle: getTask.taskTitle
+        });
+
+        await sendNewApplicantMail({
+            to: hostProfile?.gmail || getTask.email,
+            hostName: hostProfile?.firstName,
+            allyName: `${allyProfile.firstName} ${allyProfile.lastName}`,
+            taskTitle: getTask.taskTitle
+        });
     } catch (err) {
         if (err.code === 11000)
             return res.status(409).json({ message: "You already applied to this task" })
         console.log(err);
         console.log(err.message);
+        if (res.headersSent) return;
         res.status(500).json({ message: "Internal Server Error" })
     }
 }
@@ -272,6 +299,7 @@ const getSingleApplication = async (req, res) => {
  */
 const updateApplicationStatus = async (req, res) => {
     const session = await mongoose.startSession();
+    let otherApplications = [];
 
     try {
         session.startTransaction();
@@ -363,7 +391,7 @@ const updateApplicationStatus = async (req, res) => {
             task.assignedAlly = application.applicant;
 
             // Get all other applications to notify them
-            const otherApplications = await ApplyTaskModel.find(
+            otherApplications = await ApplyTaskModel.find(
                 { task: task._id, _id: { $ne: application._id }, status: "applied" },
                 null,
                 { session }
@@ -449,14 +477,56 @@ const updateApplicationStatus = async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
-        return res.status(200).json({
+        const allyProfile = await AllyProfileModel.findById(application.applicant);
+
+        res.status(200).json({
             message: "Application updated successfully",
             application,
         });
+
+        // send mails
+        if (status === "accepted") {
+            await sendApplicationAcceptedMail({
+                to: allyProfile?.gmail,
+                allyName: allyProfile?.firstName,
+                taskTitle: task.taskTitle,
+                hostName: hostProfile.firstName
+            });
+
+            await sendHostAcceptedApplicationMail({
+                to: hostProfile.gmail,
+                hostName: hostProfile.firstName,
+                allyName: allyProfile ? `${allyProfile.firstName} ${allyProfile.lastName}` : 'the ally',
+                taskTitle: task.taskTitle
+            });
+
+            for (const otherApp of otherApplications) {
+                const otherAlly = await AllyProfileModel.findById(otherApp.applicant);
+                await sendApplicationRejectedMail({
+                    to: otherAlly?.gmail,
+                    allyName: otherAlly?.firstName,
+                    taskTitle: task.taskTitle
+                });
+            }
+        }
+
+        if (status === "rejected") {
+            await sendApplicationRejectedMail({
+                to: allyProfile?.gmail,
+                allyName: allyProfile?.firstName,
+                taskTitle: task.taskTitle
+            });
+        }
+
     } catch (err) {
-        await session.abortTransaction();
-        session.endSession();
+        try {
+            await session.abortTransaction();
+            session.endSession();
+        } catch (sessionErr) {
+            console.error("session cleanup failed:", sessionErr);
+        }
         console.error(err);
+        if (res.headersSent) return;
         return res.status(500).json({ message: "Internal server error" });
     }
 };
@@ -579,15 +649,35 @@ const cancelApplication = async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
-        return res.status(200).json({
+        const hostProfile = await HostProfileModel.findById(getTask.createdBy);
+
+        res.status(200).json({
             message: "Application cancelled",
             application: getAppliedTask
         })
+
+        // send mails
+        await sendApplicationCancelledMail({
+            to: getAllyProfile.gmail,
+            userName: getAllyProfile.firstName,
+            taskTitle: getTask.taskTitle
+        });
+
+        await sendApplicationCancelledMail({
+            to: hostProfile?.gmail,
+            userName: hostProfile?.firstName,
+            taskTitle: getTask.taskTitle
+        });
     } catch (err) {
-        await session.abortTransaction();
-        session.endSession();
+        try {
+            await session.abortTransaction();
+            session.endSession();
+        } catch (sessionErr) {
+            console.error("session cleanup failed:", sessionErr);
+        }
         console.log(err)
         console.log(err.message)
+        if (res.headersSent) return;
         res.status(500).json({ message: "Internal Server Error" });
     }
 }
@@ -779,16 +869,36 @@ const markTaskCompleted = async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
-        return res.status(200).json({
+        const allyProfile = await AllyProfileModel.findById(getTask.assignedAlly);
+
+        res.status(200).json({
             message: "Task marked as completed",
             task: getTask,
             application: getApplication
         })
+
+        // send mails
+        await sendTaskCompletedMail({
+            to: getUser.gmail,
+            userName: getUser.firstName,
+            taskTitle: getTask.taskTitle
+        });
+
+        await sendTaskCompletedMail({
+            to: allyProfile?.gmail,
+            userName: allyProfile?.firstName,
+            taskTitle: getTask.taskTitle
+        });
     } catch (error) {
-        await session.abortTransaction();
-        session.endSession();
+        try {
+            await session.abortTransaction();
+            session.endSession();
+        } catch (sessionErr) {
+            console.error("session cleanup failed:", sessionErr);
+        }
         console.log(error)
         console.log(error.message)
+        if (res.headersSent) return;
         res.status(500).json({ message: "Internal Server Error" })
     }
 }
@@ -838,6 +948,12 @@ const cancelTask = async (req, res) => {
             return res.status(400).json({ message: `Task is already ${getTask.status}` })
         }
 
+        const applicationsToCancel = await ApplyTaskModel.find(
+            { task: taskId, status: { $nin: ["completed", "cancelled"] } },
+            null,
+            { session }
+        )
+
         // update the applications which not completed and cancelled 
         await ApplyTaskModel.updateMany(
             { task: taskId, status: { $nin: ["completed", "cancelled"] } },
@@ -852,16 +968,37 @@ const cancelTask = async (req, res) => {
 
         await session.commitTransaction();
         session.endSession();
-        return res.status(200).json({
+
+        res.status(200).json({
             message: "Task is Cancelled",
             task: getTask
         })
 
+        // send mails
+        await sendTaskCancelledMail({
+            to: getHost.gmail,
+            userName: getHost.firstName,
+            taskTitle: getTask.taskTitle
+        });
+
+        for (const application of applicationsToCancel) {
+            const ally = await AllyProfileModel.findById(application.applicant);
+            await sendTaskCancelledMail({
+                to: ally?.gmail,
+                userName: ally?.firstName,
+                taskTitle: getTask.taskTitle
+            });
+        }
     } catch (error) {
-        await session.abortTransaction();
-        session.endSession();
+        try {
+            await session.abortTransaction();
+            session.endSession();
+        } catch (sessionErr) {
+            console.error("session cleanup failed:", sessionErr);
+        }
         console.log(error)
         console.log(error.message)
+        if (res.headersSent) return;
         res.status(500).json({ message: "Internal Server Error" })
     }
 }
@@ -933,6 +1070,8 @@ const requestTaskCompleted = async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
+        const host = await HostProfileModel.findById(task.createdBy);
+
         // send notification for the host
         await createNotification({
             userId: task.createdBy,
@@ -961,12 +1100,25 @@ const requestTaskCompleted = async (req, res) => {
             }
         })
 
-        return res.status(200).json({ message: "Completion requested" })
+        res.status(200).json({ message: "Completion requested" })
+
+        // send mail
+        await sendCompletionRequestedMail({
+            to: host?.gmail,
+            hostName: host?.firstName,
+            allyName: ally.firstName,
+            taskTitle: task.taskTitle
+        });
     } catch (err) {
-        await session.abortTransaction();
-        session.endSession();
+        try {
+            await session.abortTransaction();
+            session.endSession();
+        } catch (sessionErr) {
+            console.error("session cleanup failed:", sessionErr);
+        }
         console.log(err)
         console.log(err.message)
+        if (res.headersSent) return;
         return res.status(500).json({ message: "Internal server error" })
     }
 }

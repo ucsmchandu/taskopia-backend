@@ -4,6 +4,7 @@ const User = require('../models/User')
 const generateToken = require('../utils/jwtToken');
 const AllyProfileModel = require('../models/AllyModels/AllyProfileModel');
 const HostProfileModel = require('../models/HostModels/HostProfileModel')
+const { sendRegistrationMail } = require('./MailControllers/mail.controllers');
 
 /**
  * Registers a new Taskopia user after verifying the Firebase ID token.
@@ -41,12 +42,18 @@ const register = async (req, res) => {
 
             if (newUser) {
                 await newUser.save();
-
                 res.status(201).json({
                     id: newUser._id,
                     userType: newUser.userType,
                     email: newUser.email,
                     message: "user verified successfully"
+                });
+
+                // send mail
+                await sendRegistrationMail({
+                    to: newUser.email,
+                    userName: newUser.userName,
+                    userType: newUser.userType
                 });
             } else {
                 return res.status(400).json({
@@ -58,6 +65,7 @@ const register = async (req, res) => {
     } catch (err) {
         console.log(err);
         console.log(err.message);
+        if (res.headersSent) return;
         res.status(500).json({
             message: "Invalid firebase Token"
         })
@@ -162,11 +170,19 @@ const autoSignup = async (req, res) => {
             generateToken({ decoded }, newUser._id, newUser.userType, res);
 
             await newUser.save();
-            return res.status(201).json({
-                id: newUser._id,
-                userType: newUser.userType,
-                email: newUser.email,
-                message: "user verified successfully"
+            res.status(201).json({
+               id: newUser._id,
+               userType: newUser.userType,
+               email: newUser.email,
+               message: "user verified successfully"
+           });
+
+
+        // send mail
+            await sendRegistrationMail({
+                to: newUser.email,
+                userName: newUser.userName,
+                userType: newUser.userType
             });
         } else {
             if (getUser.userType.toString() !== userType)
@@ -183,6 +199,7 @@ const autoSignup = async (req, res) => {
     } catch (err) {
         console.log(err);
         console.log(err.message);
+        if (res.headersSent) return;
         res.status(500).json({
             message: "Internal Server Error"
         })

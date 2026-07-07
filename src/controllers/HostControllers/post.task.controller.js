@@ -2,7 +2,13 @@ const {redisClient}=require('../../config/redis');
 const PostTaskModel = require('../../models/HostModels/PostTaskModel');
 const HostProfileModel = require('../../models/HostModels/HostProfileModel')
 const ApplyTaskModel = require('../../models/AllyModels/ApplyTaskModel');
+const AllyProfileModel = require('../../models/AllyModels/AllyProfileModel');
 const createNotification = require('../../utils/createnotification');
+const {
+    sendTaskCreatedMail,
+    sendTaskUpdatedMail,
+    sendTaskDeletedMail
+} = require('../MailControllers/mail.controllers');
 
 const tasksCacheKey = "tasks:all";
 const getTaskCacheKey = (taskId) => `task:${taskId}`;
@@ -98,14 +104,24 @@ const uploadTask = async (req, res) => {
             }
         })
 
-        return res.status(200).json({
+        res.status(200).json({
             message: "Task Uploaded successful",
             taskId: newTask._id,
             uploadTask: "true"
         });
+
+        // send mail
+        await sendTaskCreatedMail({
+            to: newTask.email || findHostProfile.gmail,
+            hostName: findHostProfile.firstName,
+            taskTitle: newTask.taskTitle,
+            budget: newTask.budget
+        });
+
     } catch (err) {
         console.log(err);
         console.log(err.message);
+        if (res.headersSent) return;
         return res.status(500).json({
             message: "Uploading task is incomplete",
             uploadTask: "false"
@@ -377,13 +393,30 @@ const deleteTask = async (req, res) => {
             });
         }
 
-        return res.status(200).json({
+        res.status(200).json({
             message: "Task Deleted",
             task
         });
+
+        // send mails
+        await sendTaskDeletedMail({
+            to: task.email || host.gmail,
+            userName: host.firstName,
+            taskTitle: task.taskTitle
+        });
+
+        for (const application of applicants) {
+            const ally = await AllyProfileModel.findById(application.applicant);
+            await sendTaskDeletedMail({
+                to: ally?.gmail,
+                userName: ally?.firstName,
+                taskTitle: task.taskTitle
+            });
+        }
     } catch (err) {
         console.log(err)
         console.log(err.message)
+        if (res.headersSent) return;
         res.status(500).json({
             message: "Internal Server Error"
         })
@@ -475,9 +508,26 @@ const editTask = async (req, res) => {
             message: "Task Updated Successfully",
             updatedTask: editedTask
         })
+
+        // send mails
+        await sendTaskUpdatedMail({
+            to: editedTask.email || user.gmail,
+            userName: user.firstName,
+            taskTitle: editedTask.taskTitle
+        });
+
+        for (const application of applicants) {
+            const ally = await AllyProfileModel.findById(application.applicant);
+            await sendTaskUpdatedMail({
+                to: ally?.gmail,
+                userName: ally?.firstName,
+                taskTitle: editedTask.taskTitle
+            });
+        }
     } catch (err) {
         console.log(err);
         console.log(err.message);
+        if (res.headersSent) return;
         res.status(500).json({
             message: "Internal Server Error"
         })
