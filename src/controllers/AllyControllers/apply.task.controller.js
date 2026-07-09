@@ -15,6 +15,7 @@ const HostProfileModel = require("../../models/HostModels/HostProfileModel")
 const createNotification = require('../../utils/createnotification')
 const User = require("../../models/User")
 const mongoose = require('mongoose')
+const { redisClient } = require('../../config/redis')
 const {
     sendTaskApplicationSubmittedMail,
     sendNewApplicantMail,
@@ -26,6 +27,23 @@ const {
     sendTaskCompletedMail,
     sendTaskCancelledMail
 } = require('../MailControllers/mail.controllers')
+
+const tasksCacheKey = "tasks:all";
+const getTaskCacheKey = (taskId) => `task:${taskId}`;
+
+const invalidateTaskCaches = async (taskId) => {
+    const keys = [tasksCacheKey];
+
+    if (taskId) {
+        keys.push(getTaskCacheKey(taskId));
+    }
+
+    try {
+        await redisClient.del(...keys);
+    } catch (err) {
+        console.error("redis cache invalidation failed:", err);
+    }
+};
 
 // for ally
 /**
@@ -116,6 +134,8 @@ const applyTask = async (req, res) => {
             taskId,
             { $inc: { applicationsCount: 1 } }
         );
+
+        await invalidateTaskCaches(taskId);
 
         res.status(200).json({
             message: "Your Application is Created successfully",
@@ -477,6 +497,8 @@ const updateApplicationStatus = async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
+        await invalidateTaskCaches(task._id);
+
         const allyProfile = await AllyProfileModel.findById(application.applicant);
 
         res.status(200).json({
@@ -648,6 +670,8 @@ const cancelApplication = async (req, res) => {
 
         await session.commitTransaction();
         session.endSession();
+
+        await invalidateTaskCaches(getTask._id);
 
         const hostProfile = await HostProfileModel.findById(getTask.createdBy);
 
@@ -869,6 +893,8 @@ const markTaskCompleted = async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
+        await invalidateTaskCaches(getTask._id);
+
         const allyProfile = await AllyProfileModel.findById(getTask.assignedAlly);
 
         res.status(200).json({
@@ -968,6 +994,8 @@ const cancelTask = async (req, res) => {
 
         await session.commitTransaction();
         session.endSession();
+
+        await invalidateTaskCaches(getTask._id);
 
         res.status(200).json({
             message: "Task is Cancelled",
@@ -1069,6 +1097,8 @@ const requestTaskCompleted = async (req, res) => {
 
         await session.commitTransaction();
         session.endSession();
+
+        await invalidateTaskCaches(task._id);
 
         const host = await HostProfileModel.findById(task.createdBy);
 

@@ -2,8 +2,26 @@ const RatingModel=require('../models/RatingModel')
 const PostTaskModel=require('../models/HostModels/PostTaskModel')
 const AllyProfileModel=require('../models/AllyModels/AllyProfileModel')
 const HostProfileModel=require('../models/HostModels/HostProfileModel')
+const {redisClient}=require('../config/redis')
 
+const getAllyProfileCacheKey=(id)=>`allyProfile:${id}`;
+const getHostProfileCacheKey=(id)=>`hostProfile:${id}`;
 
+const invalidateProfileCaches=async(profileModel,...profileIds)=>{
+    const prefix=profileModel==="AllyProfile" ? "allyProfile" : "hostProfile";
+    const getProfileCacheKey=profileModel==="AllyProfile" ? getAllyProfileCacheKey : getHostProfileCacheKey;
+    const keys=[`${prefix}:all`];
+
+    profileIds.filter(Boolean).forEach((profileId)=>{
+        keys.push(getProfileCacheKey(profileId));
+    });
+
+    try{
+        await redisClient.del(...keys);
+    }catch(err){
+        console.error("redis cache invalidation failed:",err);
+    }
+};
 
 /**
  * crates a rating for a completed task between the authenticated host and ally.
@@ -132,12 +150,14 @@ const updateAverageRating=async(profileId,profileModel)=>{
 
     const Model=profileModel==="AllyProfile" ? AllyProfileModel : HostProfileModel;
 
-    await Model.findByIdAndUpdate(profileId,{
+    const updatedProfile=await Model.findByIdAndUpdate(profileId,{
         rating:{
             average:Number(stats.average.toFixed(1)),
             count:stats.count,
         }
-    });
+    },{new:true});
+
+    await invalidateProfileCaches(profileModel,profileId,updatedProfile?.firebaseUid);
 };
 
 module.exports=createRating;

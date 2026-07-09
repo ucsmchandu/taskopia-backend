@@ -6,11 +6,12 @@ const createNotification = require('../../utils/createnotification');
 const profileCacheKey="allyProfile:all";
 const getProfileCacheKey=(id)=>`allyProfile:${id}`;
 
-const invalidateProfileCaches=async(profileId)=>{
+const invalidateProfileCaches=async(...profileIds)=>{
     const keys=[profileCacheKey];
 
-    if(profileId)
+    profileIds.filter(Boolean).forEach((profileId)=>{
         keys.push(getProfileCacheKey(profileId))
+    })
 
     try{
         await redisClient.del(...keys);
@@ -67,7 +68,7 @@ const uploadProfile = async (req, res) => {
         await newAllyProfile.save();
 
         // invalidate the cache
-        await invalidateProfileCaches(newAllyProfile.firebaseUid)
+        await invalidateProfileCaches(newAllyProfile.firebaseUid, newAllyProfile._id)
 
         // send notification for ally
         await createNotification({
@@ -182,7 +183,7 @@ const editProfile = async (req, res) => {
         );
 
         // invalidate cache
-        await invalidateProfileCaches(uid);
+        await invalidateProfileCaches(uid, updatedProfile._id);
 
         // send notification for the ally
         await createNotification({

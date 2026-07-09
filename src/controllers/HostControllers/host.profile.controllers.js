@@ -6,11 +6,12 @@ const {redisClient}=require('../../config/redis')
 const profileCacheKey="hostProfile:all";
 const getProfileCacheKey=(id)=>`hostProfile:${id}`;
 
-const invalidateProfileCaches=async(profileId)=>{
+const invalidateProfileCaches=async(...profileIds)=>{
     const keys=[profileCacheKey];
 
-    if(profileId)
+    profileIds.filter(Boolean).forEach((profileId)=>{
         keys.push(getProfileCacheKey(profileId))
+    })
 
     try{
         await redisClient.del(...keys);
@@ -71,7 +72,7 @@ const uploadProfile = async (req, res) => {
         await newHostProfile.save();
 
         // invalidate cache
-        await invalidateProfileCaches(newHostProfile.firebaseUid);
+        await invalidateProfileCaches(newHostProfile.firebaseUid, newHostProfile._id);
 
         // send notification for host
         await createNotification({
@@ -209,7 +210,7 @@ const editProfile = async (req, res) => {
         );
 
         // invalidate cache
-        await invalidateProfileCaches(updatedProfile.firebaseUid)
+        await invalidateProfileCaches(updatedProfile.firebaseUid, updatedProfile._id)
 
         // send notification for host
         await createNotification({

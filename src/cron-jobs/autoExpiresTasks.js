@@ -1,4 +1,22 @@
 const PostTaskModel = require('../models/HostModels/PostTaskModel')
+const { redisClient } = require('../config/redis')
+
+const tasksCacheKey = "tasks:all";
+const getTaskCacheKey = (taskId) => `task:${taskId}`;
+
+const invalidateTaskCaches = async (taskId) => {
+    const keys = [tasksCacheKey];
+
+    if (taskId) {
+        keys.push(getTaskCacheKey(taskId));
+    }
+
+    try {
+        await redisClient.del(...keys);
+    } catch (err) {
+        console.error("redis cache invalidation failed:", err);
+    }
+};
 
 /**
  * Automatically expires posted tasks after their configured removal date.
@@ -25,6 +43,7 @@ const autoExpiresTasks = async () => {
                 task.expiredAt = new Date();
 
             await task.save();
+            await invalidateTaskCaches(task._id);
         }
     } catch (err) {
         console.log(err)

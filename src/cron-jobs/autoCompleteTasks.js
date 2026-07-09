@@ -1,5 +1,23 @@
 const PostTaskModel = require('../models/HostModels/PostTaskModel')
 const ApplyTaskModel = require('../models/AllyModels/ApplyTaskModel')
+const { redisClient } = require('../config/redis')
+
+const tasksCacheKey = "tasks:all";
+const getTaskCacheKey = (taskId) => `task:${taskId}`;
+
+const invalidateTaskCaches = async (taskId) => {
+    const keys = [tasksCacheKey];
+
+    if (taskId) {
+        keys.push(getTaskCacheKey(taskId));
+    }
+
+    try {
+        await redisClient.del(...keys);
+    } catch (err) {
+        console.error("redis cache invalidation failed:", err);
+    }
+};
 
 /**
  * Automatically completes tasks whose completion was requested and whose ending date has passed.
@@ -24,6 +42,7 @@ const autoCompleteTasks = async () => {
             task.status = "completed",
             task.completedAt = new Date();
             await task.save();
+            await invalidateTaskCaches(task._id);
 
             // only update the task which are accepted
             await ApplyTaskModel.findOneAndUpdate({
