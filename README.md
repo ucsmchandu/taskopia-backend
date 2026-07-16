@@ -1,6 +1,7 @@
 # Taskopia Backend
 
 Taskopia Backend is the Node.js and Express API for the Taskopia marketplace. It supports Firebase based authentication, JWT cookie sessions, host and ally profiles, task posting, applications, notifications, background task lifecycle jobs, Cloudinary uploads, Redis caching, and Gemini powered AI helpers.
+It also includes a Retrieval-Augmented Generation (RAG) knowledge-base chat feature for answering Taskopia support questions from backend-stored documentation.
 
 Taskopia has two user roles:
 
@@ -26,6 +27,7 @@ Taskopia has two user roles:
 - Node.js 22 or a compatible current Node.js version
 - npm
 - MongoDB connection string
+- RAG MongoDB connection string
 - Redis server or Redis cloud URL
 - Firebase service account JSON
 - Cloudinary account
@@ -50,6 +52,7 @@ NODE_ENV=development
 
 DBURL=mongodb_connection_string
 REDIS_URL=redis_connection_string
+RAG_DBURL=mongodb_connection_string_for_rag
 
 JWT_SECRET=strong_jwt_secret
 
@@ -63,6 +66,7 @@ GEMINI_API=gemini_api_key
 Notes:
 
 - `DBURL` is required by [db.js](db.js).
+- `RAG_DBURL` is required by [src/services/ai-services/db/db.js](src/services/ai-services/db/db.js). It should point to the MongoDB database that stores the RAG knowledge chunks.
 - `REDIS_URL` is required by [src/config/redis.js](src/config/redis.js). If Redis cannot connect, the server exits.
 - `FIREBASE_SERVICE_ACCOUNT_B64` must contain the full Firebase service account JSON encoded as base64. The code reads this value in [src/utils/firebaseAdmin.js](src/utils/firebaseAdmin.js).
 - `FIREBASE_SERVICE_ACCOUNT` may exist in local env files, but the current backend code uses `FIREBASE_SERVICE_ACCOUNT_B64`.
@@ -366,6 +370,54 @@ AI implementation notes:
 - The task generation route asks Gemini to return JSON only, then strips markdown code fences before parsing.
 - The translation route returns plain translated text in `translatedText`.
 - Add schema validation before saving AI generated data directly into MongoDB.
+
+### RAG Knowledge Base Chat
+
+The backend also exposes a RAG chat endpoint for answering questions from Taskopia-specific documentation.
+
+Mounted at:
+
+```text
+POST /taskopia/ai/api/rag-chat
+```
+
+Request body:
+
+```json
+{
+  "question": "How do I apply for a task?"
+}
+```
+
+What happens behind the scenes:
+
+- The backend reads markdown files from [src/services/ai-services/rag/knowledge-base](src/services/ai-services/rag/knowledge-base).
+- The ingestion flow splits each document into smaller chunks and stores them in the RAG MongoDB database.
+- Each chunk is embedded with Gemini using the `gemini-embedding-001` model.
+- Chunk embeddings are saved in MongoDB with a unique `{ source, chunkIndex }` key.
+- When a user asks a question, the backend converts the question into a `RETRIEVAL_QUERY` embedding.
+- MongoDB Atlas Vector Search finds the most relevant chunks using the `embedding` field and the `vector_index` index.
+- The backend builds a prompt from the retrieved chunks and sends it to Gemini to generate the final answer.
+
+Important setup notes:
+
+- `searchRelevantChunks` expects a MongoDB Atlas Vector Search index named `vector_index` on the `embedding` field.
+- The ingestion script should use `RETRIEVAL_DOCUMENT` embeddings for the knowledge base chunks.
+- The chat path should use `RETRIEVAL_QUERY` embeddings for user questions.
+- If the knowledge base has no matching chunks, the API should return a friendly fallback response instead of trying to generate an answer from empty context.
+
+Why this feature matters:
+
+- It lets the backend answer support and product questions using Taskopia's own documentation.
+- It keeps answers grounded in the knowledge base instead of relying only on general model knowledge.
+- It is a better fit for app-specific help, policy explanations, onboarding guidance, and workflow questions.
+
+Typical use cases:
+
+- Explaining how host and ally workflows work
+- Answering onboarding and feature questions
+- Summarizing platform rules, policies, and task flow details
+- Giving support answers based on the maintained knowledge base
 
 ## Redis Caching
 
