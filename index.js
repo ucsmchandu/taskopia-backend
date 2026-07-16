@@ -19,8 +19,11 @@ const {connectRedis}=require('./src/config/redis');
 // rate limiter
 const { rateLimiter } = require('./src/middlewares/rateLimiter');
 
+// rag database
+const {connectRagDB}=require('./src/services/ai-services/db/db')
 
 connectDB();
+connectRagDB();
 connectRedis();
 
 const app = express();

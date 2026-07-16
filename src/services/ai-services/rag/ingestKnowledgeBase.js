@@ -74,5 +74,10 @@ const ingestKnowledgeBase=async(options={})=>{
         process.exit(1);
     }
 }
-ingestKnowledgeBase();
+
+// only run when run the file directly otherwise dont run
+if(require.main===module){
+    ingestKnowledgeBase();
+}
+
 module.exports=ingestKnowledgeBase;
