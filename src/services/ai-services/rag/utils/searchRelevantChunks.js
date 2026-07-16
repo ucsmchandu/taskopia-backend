@@ -39,7 +39,7 @@ const searchRelevantChunks=async(question,limit=5)=>{
             }
         ]);
 
-        console.log(results);
+        // console.log(results);
         return results;
 
     } catch (error) {
