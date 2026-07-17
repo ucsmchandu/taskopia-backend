@@ -27,6 +27,7 @@ connectRagDB();
 connectRedis();
 
 const app = express();
+app.set('trust proxy', 1);
 app.use(rateLimiter);
 app.use(cors({
     origin: ["http://localhost:5173", 'https://taskopia-one.vercel.app'],
