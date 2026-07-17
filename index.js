@@ -22,18 +22,14 @@ const { rateLimiter } = require('./src/middlewares/rateLimiter');
 // rag database
 const {connectRagDB}=require('./src/services/ai-services/db/db')
 
-connectDB();
-connectRagDB();
-connectRedis();
-
 const app = express();
 app.set('trust proxy', 1);
-app.use(rateLimiter);
 app.use(cors({
     origin: ["http://localhost:5173", 'https://taskopia-one.vercel.app'],
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     credentials: true
 }))
+app.use(rateLimiter);
 app.use(express.json());
 app.use(cookieParser())
 app.use(express.urlencoded({ extended: true }))
@@ -50,7 +46,17 @@ cron.schedule("*/10 * * * *", async () => {
 });
 
 
+const startServer = async () => {
+    await connectDB();
+    await connectRagDB();
+    await connectRedis();
 
-app.listen(process.env.PORT, () => {
-    console.log("server runs on 3000 port");
-})
+    app.listen(process.env.PORT, () => {
+        console.log(`server runs on ${process.env.PORT || 3000} port`);
+    })
+}
+
+startServer().catch((err) => {
+    console.error("failed to start server:", err);
+    process.exit(1);
+});

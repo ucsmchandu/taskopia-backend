@@ -1,12 +1,22 @@
-const {rateLimit} = require('express-rate-limit')
+const { rateLimit } = require('express-rate-limit');
+const { redisClient } = require('../config/redis');
+const RedisRateLimitStore = require('./redisRateLimitStore');
 
 const windowMs = 15 * 60 * 1000;
 
-const rateLimiter=rateLimit({
-    windowMs:windowMs,
+const createRedisStore = (prefix) =>
+    new RedisRateLimitStore({
+        client: redisClient,
+        prefix,
+        windowMs,
+    });
+
+const rateLimiter = rateLimit({
+    windowMs,
     limit:200,
     standardHeaders:true,
     legacyHeaders:false,
+    store: createRedisStore('taskopia:rate-limit:global'),
     handler:(req,res)=>{
         res.status(429).json({
             success:false,
@@ -15,11 +25,12 @@ const rateLimiter=rateLimit({
     },
 })
 
-const authRateLimiter=rateLimit({
-    windowMs:windowMs,
+const authRateLimiter = rateLimit({
+    windowMs,
     limit:20,
     standardHeaders:true,
     legacyHeaders:false,
+    store: createRedisStore('taskopia:rate-limit:auth'),
     handler:(req,res)=>{
         res.status(429).json({
             success:false,
