@@ -61,7 +61,7 @@ const uploadTask = async (req, res) => {
         // console.log("img url :",req.file.path);
 
         // check if the location coordinates are recived or not
-        if (!lat || !lng)
+        if (lat === undefined || lng === undefined || lat === null || lng === null)
             return res.status(400).json({ message: "Location is Required" });
 
         const geoLocation = lat !== undefined && lng !== undefined && lat !== null && lng !== null ? {
@@ -434,7 +434,7 @@ const deleteTask = async (req, res) => {
  */
 const editTask = async (req, res) => {
     try {
-        const uid = req.firebaseUser.uid;
+        const { uid } = req.firebaseUser;
         // const userId = req.firebaseUser.userId;
         const taskId = req.params.id;
         // console.log(req.file);
@@ -459,7 +459,15 @@ const editTask = async (req, res) => {
 
         fields.forEach((field) => { if (req.body[field] !== undefined) updates[field] = req.body[field]; })
 
-        if (req.file?.path.length) updates.attachments = req.file?.path;
+        const { lat, lng } = req.body;
+        if (lat !== undefined && lng !== undefined && lat !== null && lng !== null && lat !== "" && lng !== "") {
+            updates.location = {
+                type: "Point",
+                coordinates: [parseFloat(lng), parseFloat(lat)]
+            };
+        }
+
+        if (req.file?.path) updates.attachments = req.file?.path;
 
         const editedTask = await PostTaskModel.findByIdAndUpdate(
             taskId,
