@@ -160,4 +160,32 @@ const updateAverageRating=async(profileId,profileModel)=>{
     await invalidateProfileCaches(profileModel,profileId,updatedProfile?.firebaseUid);
 };
 
-module.exports=createRating;
+/**
+ * this function will return the reviews for the given public id of the host or ally
+ * 
+ */
+const getReviews=async(req,res)=>{
+    try{
+        const {profileId}=req.params;
+
+        /*
+        so, here we hve to return the reviews which are related to the given profile id
+
+        so we have to check the toUser field in the rating model, to get the data
+        */
+      
+        const reviewsData=await RatingModel.find({toUser:profileId,review:{$exists:true,$ne:""}})
+        .sort({createdAt:-1}).populate("fromUser").lean();
+        return res.status(200).json({
+            count:reviewsData.length,
+            reviewsData
+        });
+    }catch(err){
+        console.log(err);
+        return res.status(500).json({
+            message:"Internal server error."
+        })
+    }
+}
+
+module.exports={createRating,getReviews};
